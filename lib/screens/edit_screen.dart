@@ -36,6 +36,16 @@ class _EditScreenState extends State<EditScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant EditScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.note?.id != oldWidget.note?.id) {
+      _titleController.text = widget.note?.title ?? '';
+      _labelController.text = widget.note?.label ?? '';
+      _contentController.text = widget.note?.content ?? '';
+    }
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _labelController.dispose();
@@ -380,6 +390,7 @@ class _EditScreenState extends State<EditScreen> {
                             // Title TextField (Transparent and massive display font)
                             TextField(
                               controller: _titleController,
+                              autofocus: true,
                               style: theme.textTheme.displayLarge?.copyWith(
                                 fontSize: isMobile ? 36.0 : 48.0,
                                 color: theme.colorScheme.onSurface,

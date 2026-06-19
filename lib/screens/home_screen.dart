@@ -32,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late final TabController _settingsTabController;
   late final TextEditingController _writingStyleInstructionController;
   late final List<TextEditingController> _writingStyleSampleControllers;
+  late final FocusNode _searchFocusNode;
+  late final TextEditingController _searchController;
   String _lastLangCode = '';
 
   @override
@@ -44,6 +46,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _settingsTabController = TabController(length: 3, vsync: this);
     _writingStyleInstructionController = TextEditingController();
     _writingStyleSampleControllers = List.generate(3, (_) => TextEditingController());
+    _searchFocusNode = FocusNode(skipTraversal: true);
+    _searchController = TextEditingController();
 
     _settingsProvider.addListener(_onPreferencesChanged);
   }
@@ -104,6 +108,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     for (final c in _writingStyleSampleControllers) {
       c.dispose();
     }
+    _searchFocusNode.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -292,6 +298,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           setState(() {
             _currentTab = index;
             _searchQuery = ''; // reset search
+            _searchController.clear();
             _showAllNotes = false;
           });
         },
@@ -326,6 +333,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         setState(() {
           _currentTab = index;
           _searchQuery = ''; // Reset search
+          _searchController.clear();
           _showAllNotes = false;
         });
         Navigator.pop(context); // Close the drawer
@@ -420,8 +428,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final notesProvider = Provider.of<NotesProvider>(context);
     List<Note> filteredNotes = _getFilteredNotes(notesProvider.notes);
 
-    // Sync selected note if current one is deleted/empty
+    // Sync selected note if current one is deleted/empty (and we are not creating a new note)
     if (filteredNotes.isNotEmpty &&
+        !(_selectedNoteId == null && _isEditingRightPane) &&
         (notesProvider.getNoteById(_selectedNoteId ?? '') == null)) {
       _selectedNoteId = filteredNotes.first.id;
     }
@@ -607,6 +616,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: TextField(
+        controller: _searchController,
+        focusNode: _searchFocusNode,
         onChanged: (val) => setState(() => _searchQuery = val),
         style: theme.textTheme.bodyMedium,
         decoration: InputDecoration(
@@ -777,6 +788,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   setState(() {
                     _currentTab = index;
                     _searchQuery = '';
+                    _searchController.clear();
                     _showAllNotes = false;
                   });
                 },
