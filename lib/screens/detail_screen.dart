@@ -42,8 +42,6 @@ class _DetailScreenState extends State<DetailScreen> {
   // Selected tab for the preview card (0: Share, 1: Facebook, 2: Mastodon, 3: Bluesky)
   int _selectedPreviewTab = 0;
 
-  // Expandable FAB state
-  bool _isFabExpanded = false;
 
   @override
   void initState() {
@@ -173,7 +171,9 @@ class _DetailScreenState extends State<DetailScreen> {
     }
     if (_blueskySummary == null) return;
 
-    _showSimulatedShareDialog('Bluesky', _blueskySummary!);
+    SharePlus.instance.share(
+      ShareParams(text: _blueskySummary!, subject: widget.note.title),
+    );
   }
 
   void _shareToMastodon() async {
@@ -182,7 +182,9 @@ class _DetailScreenState extends State<DetailScreen> {
     }
     if (_mastodonSummary == null) return;
 
-    _showSimulatedShareDialog('Mastodon', _mastodonSummary!);
+    SharePlus.instance.share(
+      ShareParams(text: _mastodonSummary!, subject: widget.note.title),
+    );
   }
 
   void _shareToFacebook() async {
@@ -191,7 +193,9 @@ class _DetailScreenState extends State<DetailScreen> {
     }
     if (_facebookSummary == null) return;
 
-    _showSimulatedShareDialog('Facebook', _facebookSummary!);
+    SharePlus.instance.share(
+      ShareParams(text: _facebookSummary!, subject: widget.note.title),
+    );
   }
 
   void _shareSystem() async {
@@ -202,62 +206,6 @@ class _DetailScreenState extends State<DetailScreen> {
 
     SharePlus.instance.share(
       ShareParams(text: _shareSummary!, subject: widget.note.title),
-    );
-  }
-
-  void _showSimulatedShareDialog(String platform, String text) {
-    final theme = Theme.of(context);
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => FutureBuilder(
-        future: Future.delayed(const Duration(milliseconds: 1500)),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(this.context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    '${'detail.success_posted_to'.tr()} $platform!',
-                  ),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            });
-            return const SizedBox.shrink();
-          }
-
-          return AlertDialog(
-            backgroundColor: theme.colorScheme.surface,
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(
-                  color: theme.colorScheme.primaryContainer,
-                ),
-                const SizedBox(height: 20.0),
-                Text(
-                  '${'detail.sharing_to'.tr()} $platform...',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 12.0),
-                Text(
-                  text,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
     );
   }
 
@@ -481,179 +429,11 @@ class _DetailScreenState extends State<DetailScreen> {
               ),
             ),
           ),
-          // Custom Expandable Speed Dial FAB (located at bottom-right)
-          floatingActionButton: _buildSpeedDialFab(context, settingsProvider),
-          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
       },
     );
   }
 
-  Widget? _buildSpeedDialFab(
-    BuildContext context,
-    SettingsProvider settingsProvider,
-  ) {
-    final theme = Theme.of(context);
-
-    // Only show the sharing FAB once at least one post text has been generated
-    final hasAnySummary =
-        _blueskySummary != null ||
-        _mastodonSummary != null ||
-        _facebookSummary != null ||
-        _shareSummary != null;
-
-    if (!hasAnySummary) return null;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        if (_isFabExpanded) ...[
-          // Share to... (system share sheet)
-          if (_shareSummary != null) ...[
-            _buildMiniFab(
-              svgPath: 'assets/icon/share-icon.svg',
-              label: 'detail.sharing_to'.tr(),
-              backgroundColor: theme.colorScheme.primaryContainer,
-              onPressed: () {
-                setState(() {
-                  _isFabExpanded = false;
-                });
-                _shareSystem();
-              },
-              theme: theme,
-            ),
-            const SizedBox(height: 12.0),
-          ],
-
-          // Share to Facebook
-          if (_facebookSummary != null) ...[
-            _buildMiniFab(
-              svgPath: 'assets/icon/facebook-icon.svg',
-              label: '${'detail.sharing_to'.tr()} Facebook',
-              backgroundColor: const Color(0xFF0866FF),
-              onPressed: () {
-                setState(() {
-                  _isFabExpanded = false;
-                });
-                _shareToFacebook();
-              },
-              theme: theme,
-            ),
-            const SizedBox(height: 12.0),
-          ],
-
-          // Share to Mastodon
-          if (_mastodonSummary != null) ...[
-            _buildMiniFab(
-              svgPath: 'assets/icon/mastodon-icon.svg',
-              label: '${'detail.sharing_to'.tr()} Mastodon',
-              backgroundColor: const Color(0xFF6364FF),
-              onPressed: () {
-                setState(() {
-                  _isFabExpanded = false;
-                });
-                _shareToMastodon();
-              },
-              theme: theme,
-            ),
-            const SizedBox(height: 12.0),
-          ],
-
-          // Share to Bluesky
-          if (_blueskySummary != null) ...[
-            _buildMiniFab(
-              svgPath: 'assets/icon/bluesky-icon.svg',
-              label: '${'detail.sharing_to'.tr()} Bluesky',
-              backgroundColor: const Color(0xFF0085FF),
-              onPressed: () {
-                setState(() {
-                  _isFabExpanded = false;
-                });
-                _shareToBluesky();
-              },
-              theme: theme,
-            ),
-            const SizedBox(height: 12.0),
-          ],
-        ],
-
-        // Main Toggle FAB (Glassmorphic look)
-        FloatingActionButton(
-          heroTag: 'main_share_fab',
-          backgroundColor: _isFabExpanded
-              ? theme.colorScheme.errorContainer
-              : theme.colorScheme.primaryContainer,
-          foregroundColor: _isFabExpanded
-              ? theme.colorScheme.onErrorContainer
-              : theme.colorScheme.onPrimaryContainer,
-          onPressed: () {
-            setState(() {
-              _isFabExpanded = !_isFabExpanded;
-            });
-          },
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Icon(
-              _isFabExpanded ? Icons.close : Icons.share_rounded,
-              key: ValueKey<bool>(_isFabExpanded),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMiniFab({
-    IconData? icon,
-    String? svgPath,
-    required String label,
-    required Color backgroundColor,
-    required VoidCallback onPressed,
-    required ThemeData theme,
-  }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Premium glassmorphic/dark label next to mini FAB
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E).withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(6.0),
-            border: Border.all(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
-            ),
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12.0,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8.0),
-        FloatingActionButton.small(
-          heroTag: 'share_mini_$label',
-          backgroundColor: backgroundColor,
-          foregroundColor: Colors.white,
-          onPressed: onPressed,
-          child: svgPath != null
-              ? SvgPicture.asset(
-                  svgPath,
-                  width: 24.0,
-                  height: 24.0,
-                  colorFilter: svgPath.contains('share-icon.svg')
-                      ? const ColorFilter.mode(Colors.white, BlendMode.srcIn)
-                      : null,
-                )
-              : Icon(icon),
-        ),
-      ],
-    );
-  }
 
   Widget _buildSocialPreviewCard(
     ThemeData theme,
@@ -934,10 +714,15 @@ class _DetailScreenState extends State<DetailScreen> {
                               tooltip: 'Share / Post Now',
                               color: accentColor,
                               onPressed: () {
-                                if (currentTab == 0) _shareSystem();
-                                if (currentTab == 1) _shareToFacebook();
-                                if (currentTab == 2) _shareToMastodon();
-                                if (currentTab == 3) _shareToBluesky();
+                                if (currentTab == 0) {
+                                  _shareSystem();
+                                } else if (currentTab == 1) {
+                                  _shareToFacebook();
+                                } else if (currentTab == 2) {
+                                  _shareToMastodon();
+                                } else if (currentTab == 3) {
+                                  _shareToBluesky();
+                                }
                               },
                             ),
                           ],

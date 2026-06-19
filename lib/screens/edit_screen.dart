@@ -699,7 +699,11 @@ class _GeminiRestructureSheetState extends State<GeminiRestructureSheet> {
   @override
   void initState() {
     super.initState();
-    _generateRestructured();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _generateRestructured();
+      }
+    });
   }
 
   Future<void> _generateRestructured() async {
