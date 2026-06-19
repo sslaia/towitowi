@@ -27,19 +27,19 @@ class _DetailScreenState extends State<DetailScreen> {
   final FlutterTts _flutterTts = FlutterTts();
   bool _isSpeaking = false;
 
-  // Cached AI Social Summaries
+  // Cached AI social summaries
   String? _blueskySummary;
   String? _mastodonSummary;
   String? _facebookSummary;
   String? _shareSummary;
 
-  // Loading States
+  // Loading states
   bool _isGeneratingBluesky = false;
   bool _isGeneratingMastodon = false;
   bool _isGeneratingFacebook = false;
   bool _isGeneratingShare = false;
 
-  // Selected tab for the preview card (0: Bluesky, 1: Mastodon, 2: System Share)
+  // Selected tab for the preview card (0: Share, 1: Facebook, 2: Mastodon, 3: Bluesky)
   int _selectedPreviewTab = 0;
 
   // Expandable FAB state
@@ -110,10 +110,8 @@ class _DetailScreenState extends State<DetailScreen> {
 
     if (!aiService.hasAnyConfiguredKey(settingsProvider.geminiApiKey)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Gemini API key is not configured. Please add your key in Account Settings.',
-          ),
+        SnackBar(
+          content: Text('detail.gemini_not_configured'.tr()),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -150,7 +148,9 @@ class _DetailScreenState extends State<DetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to generate summary: ${e.toString()}'),
+            content: Text(
+              '${'detail.failed_to_generate_summary:'.tr()} ${e.toString()}',
+            ),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -218,7 +218,9 @@ class _DetailScreenState extends State<DetailScreen> {
               Navigator.pop(context);
               ScaffoldMessenger.of(this.context).showSnackBar(
                 SnackBar(
-                  content: Text('Successfully posted to $platform!'),
+                  content: Text(
+                    '${'detail.success_posted_to'.tr()} $platform!',
+                  ),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -236,7 +238,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 ),
                 const SizedBox(height: 20.0),
                 Text(
-                  'Sharing to $platform...',
+                  '${'detail.sharing_to'.tr()} $platform...',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurface,
                   ),
@@ -511,7 +513,7 @@ class _DetailScreenState extends State<DetailScreen> {
           if (_shareSummary != null) ...[
             _buildMiniFab(
               svgPath: 'assets/icon/share-icon.svg',
-              label: 'Share to...',
+              label: 'detail.sharing_to'.tr(),
               backgroundColor: theme.colorScheme.primaryContainer,
               onPressed: () {
                 setState(() {
@@ -528,7 +530,7 @@ class _DetailScreenState extends State<DetailScreen> {
           if (_facebookSummary != null) ...[
             _buildMiniFab(
               svgPath: 'assets/icon/facebook-icon.svg',
-              label: 'Share to Facebook',
+              label: '${'detail.sharing_to'.tr()} Facebook',
               backgroundColor: const Color(0xFF0866FF),
               onPressed: () {
                 setState(() {
@@ -545,7 +547,7 @@ class _DetailScreenState extends State<DetailScreen> {
           if (_mastodonSummary != null) ...[
             _buildMiniFab(
               svgPath: 'assets/icon/mastodon-icon.svg',
-              label: 'Share to Mastodon',
+              label: '${'detail.sharing_to'.tr()} Mastodon',
               backgroundColor: const Color(0xFF6364FF),
               onPressed: () {
                 setState(() {
@@ -562,7 +564,7 @@ class _DetailScreenState extends State<DetailScreen> {
           if (_blueskySummary != null) ...[
             _buildMiniFab(
               svgPath: 'assets/icon/bluesky-icon.svg',
-              label: 'Share to Bluesky',
+              label: '${'detail.sharing_to'.tr()} Bluesky',
               backgroundColor: const Color(0xFF0085FF),
               onPressed: () {
                 setState(() {
@@ -644,10 +646,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   width: 24.0,
                   height: 24.0,
                   colorFilter: svgPath.contains('share-icon.svg')
-                      ? const ColorFilter.mode(
-                          Colors.white,
-                          BlendMode.srcIn,
-                        )
+                      ? const ColorFilter.mode(Colors.white, BlendMode.srcIn)
                       : null,
                 )
               : Icon(icon),
@@ -747,7 +746,11 @@ class _DetailScreenState extends State<DetailScreen> {
                 children: [
                   _buildSocialTabButton(0, 'assets/icon/share-icon.svg', theme),
                   const SizedBox(width: 8.0),
-                  _buildSocialTabButton(1, 'assets/icon/facebook-icon.svg', theme),
+                  _buildSocialTabButton(
+                    1,
+                    'assets/icon/facebook-icon.svg',
+                    theme,
+                  ),
                   const SizedBox(width: 8.0),
                   _buildSocialTabButton(
                     2,
@@ -755,7 +758,11 @@ class _DetailScreenState extends State<DetailScreen> {
                     theme,
                   ),
                   const SizedBox(width: 8.0),
-                  _buildSocialTabButton(3, 'assets/icon/bluesky-icon.svg', theme),
+                  _buildSocialTabButton(
+                    3,
+                    'assets/icon/bluesky-icon.svg',
+                    theme,
+                  ),
                 ],
               ),
             ),
@@ -860,7 +867,8 @@ class _DetailScreenState extends State<DetailScreen> {
                               platformIconPath,
                               width: 24.0,
                               height: 24.0,
-                              colorFilter: platformIconPath.contains('share-icon.svg')
+                              colorFilter:
+                                  platformIconPath.contains('share-icon.svg')
                                   ? ColorFilter.mode(
                                       accentColor,
                                       BlendMode.srcIn,
@@ -926,10 +934,10 @@ class _DetailScreenState extends State<DetailScreen> {
                               tooltip: 'Share / Post Now',
                               color: accentColor,
                               onPressed: () {
-                                 if (currentTab == 0) _shareSystem();
-                                 if (currentTab == 1) _shareToFacebook();
-                                 if (currentTab == 2) _shareToMastodon();
-                                 if (currentTab == 3) _shareToBluesky();
+                                if (currentTab == 0) _shareSystem();
+                                if (currentTab == 1) _shareToFacebook();
+                                if (currentTab == 2) _shareToMastodon();
+                                if (currentTab == 3) _shareToBluesky();
                               },
                             ),
                           ],

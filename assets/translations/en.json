@@ -92,6 +92,10 @@
   },
   "detail": {
     "edit_note_tooltip": "Edit Towi Note",
+    "sharing_to": "Sharing to",
+    "success_posted_to": "Successfully posted to",
+    "failed_to_generate_summary": "Failed to generate summary",
+    "gemini_not_configured": "Gemini API key is not configured. Please add your key in the Settings",
     "word_count": "{} words",
     "no_preview": "No {} preview generated yet",
     "listen_tooltip": "Listen to note",
@@ -124,7 +128,7 @@
   "about": {
     "title": "About",
     "version": "Version 0.1.0",
-    "description": "TowiTowi is a note-taking application inspired by the Towitowi bird of Nias. According to local lore, when the Towitowi bird chirps, it brings good news. We hope that writing and sharing your Towi notes brings happiness and good news to you and your community.",
+    "description": "TowiTowi is a note-taking application inspired by the Towitowi bird of Nias (Orthotomus ruficeps baeus). According to local lore, when the Towitowi bird chirps, it brings good news. We hope that writing and sharing your Towi notes brings happiness and good news to you and your community.",
     "view_licenses": "View Licenses",
     "copyright": "© 2026 io.github.sslaia.towitowi"
   }

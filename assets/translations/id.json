@@ -92,6 +92,10 @@
   },
   "detail": {
     "edit_note_tooltip": "Ubah Catatan",
+    "sharing_to": "Bagikan ke",
+    "success_posted_to": "Berhasil diposkan di",
+    "failed_to_generate_summary": "Gagal membuat rangkuman",
+    "gemini_not_configured": "Kunci API Gemini belum ada. Tambahkan kunci Anda di halaman Pengaturan",
     "word_count": "{} kata",
     "no_preview": "Belum ada pratinjau {}",
     "listen_tooltip": "Dengarkan catatan",
@@ -124,7 +128,7 @@
   "about": {
     "title": "Tentang",
     "version": "Versi 0.1.0",
-    "description": "TowiTowi adalah aplikasi pencatat yang terinspirasi oleh burung Towitowi dari Nias. Menurut kepercayaan setempat, kicauan burung Towitowi membawa kabar baik. Kami berharap bahwa menulis dan membagikan catatan Towi Anda membawa kebahagiaan dan kabar baik bagi Anda dan komunitas Anda.",
+    "description": "TowiTowi adalah aplikasi pencatat yang terinspirasi oleh burung Towitowi dari Nias (Orthotomus ruficeps baeus). Menurut kepercayaan setempat, kicauan burung Towitowi membawa kabar baik. Kami berharap bahwa menulis dan membagikan catatan Towi Anda membawa kebahagiaan dan kabar baik bagi Anda dan komunitas Anda.",
     "view_licenses": "Lihat Lisensi",
     "copyright": "© 2026 io.github.sslaia.towitowi"
   }

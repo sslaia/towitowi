@@ -29,7 +29,6 @@ class AboutScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // App Icon Showcase with golden premium drop shadow
                   Container(
                     width: 120.0,
                     height: 120.0,
@@ -41,7 +40,9 @@ class AboutScreen extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
+                          color: theme.colorScheme.primaryContainer.withValues(
+                            alpha: 0.15,
+                          ),
                           blurRadius: 30.0,
                           spreadRadius: 3.0,
                         ),
@@ -56,8 +57,7 @@ class AboutScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24.0),
-                  
-                  // App Title
+
                   Text(
                     'app_title'.tr(),
                     style: theme.textTheme.displayLarge?.copyWith(
@@ -67,8 +67,7 @@ class AboutScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4.0),
-                  
-                  // App Version
+
                   Text(
                     'about.version'.tr(),
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -78,16 +77,18 @@ class AboutScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 32.0),
-                  
-                  // Brand Story & Description Card
+
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24.0),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.05),
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(16.0),
                       border: Border.all(
-                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
+                        color: theme.colorScheme.outlineVariant.withValues(
+                          alpha: 0.1,
+                        ),
                         width: 1.0,
                       ),
                     ),
@@ -103,7 +104,9 @@ class AboutScreen extends StatelessWidget {
                           'about.description'.tr(),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             height: 1.6,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.9),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.9,
+                            ),
                             fontSize: 15.0,
                           ),
                           textAlign: TextAlign.center,
@@ -112,16 +115,20 @@ class AboutScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 48.0),
-                  
-                  // License Button
+
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: theme.colorScheme.primaryContainer,
                       side: BorderSide(
-                        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                        color: theme.colorScheme.primaryContainer.withValues(
+                          alpha: 0.5,
+                        ),
                         width: 1.5,
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 12.0,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
@@ -161,8 +168,7 @@ class AboutScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 48.0),
-                  
-                  // Copyright info
+
                   Text(
                     'about.copyright'.tr(),
                     style: theme.textTheme.bodySmall?.copyWith(
