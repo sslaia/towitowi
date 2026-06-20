@@ -11,6 +11,7 @@ import '../widgets/note_list_item.dart';
 import 'detail_screen.dart';
 import 'edit_screen.dart';
 import 'about_screen.dart';
+import '../services/backup_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -111,6 +112,71 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _searchFocusNode.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _handleExport(BuildContext context) async {
+    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+    
+    if (notesProvider.notes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('backup_restore.no_notes_to_export'.tr()),
+          backgroundColor: Colors.amber,
+        ),
+      );
+      return;
+    }
+
+    try {
+      await BackupService.exportNotes(notesProvider.notes);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('backup_restore.export_success'.tr()),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (e.toString().contains('cancelled')) {
+        return;
+      }
+      if (context.mounted) {
+        final errorMsg = e.toString().contains('no_notes') 
+            ? 'backup_restore.no_notes_to_export'.tr() 
+            : e.toString();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('backup_restore.export_failed'.tr(args: [errorMsg])),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
+  void _handleImport(BuildContext context) async {
+    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+    try {
+      final count = await BackupService.importNotes(notesProvider);
+      if (context.mounted && count > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('backup_restore.import_success'.tr(args: [count.toString()])),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('backup_restore.import_failed'.tr(args: [e.toString()])),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -461,6 +527,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         setState(() {
                           _selectedNoteId = null;
                           _isEditingRightPane = true;
+                          if (_currentTab == 4) {
+                            _currentTab = 0;
+                          }
                         });
                       },
                     ),
@@ -762,6 +831,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               setState(() {
                 _selectedNoteId = note.id;
                 _isEditingRightPane = false;
+                if (_currentTab == 4) {
+                  _currentTab = 0;
+                }
               });
             }
           },
@@ -914,6 +986,93 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             const Divider(color: Colors.white10),
             const SizedBox(height: 24.0),
 
+            // Backup & Restore Section Header
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'backup_restore.title'.tr().toUpperCase(),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.secondaryContainer,
+                  letterSpacing: 1.5,
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              'backup_restore.desc'.tr(),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 20.0),
+
+            // Export & Import Buttons Row
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFFFFE16D),
+                      side: const BorderSide(
+                        color: Color(0xFFFFE16D),
+                        width: 1.5,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16.0,
+                      ),
+                    ),
+                    icon: const Icon(Icons.file_upload_outlined, size: 18.0),
+                    label: Text(
+                      'backup_restore.export_button'.tr(),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: const Color(0xFFFFE16D),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.0,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    onPressed: () => _handleExport(context),
+                  ),
+                ),
+                const SizedBox(width: 16.0),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      foregroundColor: theme.colorScheme.onPrimaryContainer,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16.0,
+                      ),
+                    ),
+                    icon: const Icon(Icons.file_download_outlined, size: 18.0),
+                    label: Text(
+                      'backup_restore.import_button'.tr(),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.0,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    onPressed: () => _handleImport(context),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 32.0),
+            const Divider(color: Colors.white10),
+            const SizedBox(height: 24.0),
+
             // Gemini API Key Section Header
             Align(
               alignment: Alignment.centerLeft,
@@ -957,6 +1116,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 _settingsProvider.setGeminiApiKey(val);
               },
             ),
+
             const SizedBox(height: 32.0),
             const Divider(color: Colors.white10),
             const SizedBox(height: 24.0),

@@ -7,6 +7,7 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../models/note.dart';
+import '../providers/notes_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/ai_content_service.dart';
 import '../widgets/responsive_builder.dart';
@@ -165,15 +166,57 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
+    return '$day/$month/$year';
+  }
+
+  void _saveSocialPostAsNote(String platform, String content) async {
+    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+    final dateStr = _formatDate(DateTime.now());
+    final newNote = Note(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: '$platform post ($dateStr)',
+      label: widget.note.label.isEmpty ? 'General' : widget.note.label,
+      content: content,
+      date: DateTime.now(),
+    );
+    await notesProvider.addNote(newNote);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'detail.saved_as_new_note'.tr(),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+        ),
+      );
+    }
+  }
+
   void _shareToBluesky() async {
     if (_blueskySummary == null) {
       await _generatePreview(3);
     }
     if (_blueskySummary == null) return;
 
-    SharePlus.instance.share(
-      ShareParams(text: _blueskySummary!, subject: widget.note.title),
+    Share.share(
+      _blueskySummary!,
+      subject: widget.note.title,
     );
+    _saveSocialPostAsNote('Bluesky', _blueskySummary!);
   }
 
   void _shareToMastodon() async {
@@ -182,9 +225,11 @@ class _DetailScreenState extends State<DetailScreen> {
     }
     if (_mastodonSummary == null) return;
 
-    SharePlus.instance.share(
-      ShareParams(text: _mastodonSummary!, subject: widget.note.title),
+    Share.share(
+      _mastodonSummary!,
+      subject: widget.note.title,
     );
+    _saveSocialPostAsNote('Mastodon', _mastodonSummary!);
   }
 
   void _shareToFacebook() async {
@@ -193,9 +238,11 @@ class _DetailScreenState extends State<DetailScreen> {
     }
     if (_facebookSummary == null) return;
 
-    SharePlus.instance.share(
-      ShareParams(text: _facebookSummary!, subject: widget.note.title),
+    Share.share(
+      _facebookSummary!,
+      subject: widget.note.title,
     );
+    _saveSocialPostAsNote('Facebook', _facebookSummary!);
   }
 
   void _shareSystem() async {
@@ -204,9 +251,11 @@ class _DetailScreenState extends State<DetailScreen> {
     }
     if (_shareSummary == null) return;
 
-    SharePlus.instance.share(
-      ShareParams(text: _shareSummary!, subject: widget.note.title),
+    Share.share(
+      _shareSummary!,
+      subject: widget.note.title,
     );
+    _saveSocialPostAsNote('Shared', _shareSummary!);
   }
 
   @override

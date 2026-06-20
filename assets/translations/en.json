@@ -102,7 +102,8 @@
     "stop_tooltip": "Stop listening",
     "social_preview": "SOCIAL MEDIA POST PREVIEW",
     "bookmarked": "Note bookmarked",
-    "unbookmarked": "Bookmark removed"
+    "unbookmarked": "Bookmark removed",
+    "saved_as_new_note": "Saved as a new note!"
   },
   "account": {
     "title": "Settings",
@@ -124,6 +125,17 @@
     "save_settings": "Save Settings",
     "writing_style_sample_hint": "Enter columnist article example here...",
     "writing_style_active_lang": "Active Language: {}"
+  },
+  "backup_restore": {
+    "title": "Backup & Restore",
+    "desc": "Export all your Towi notes to a markdown ZIP archive, or import notes from markdown files.",
+    "export_button": "EXPORT ALL NOTES",
+    "import_button": "IMPORT NOTES",
+    "export_success": "Notes exported successfully!",
+    "import_success": "Successfully imported {} note(s)!",
+    "export_failed": "Export failed: {}",
+    "import_failed": "Import failed: {}",
+    "no_notes_to_export": "No notes to export."
   },
   "about": {
     "title": "About",
