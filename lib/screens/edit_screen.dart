@@ -23,6 +23,7 @@ class _EditScreenState extends State<EditScreen> {
   late TextEditingController _titleController;
   late TextEditingController _labelController;
   late TextEditingController _contentController;
+  late FocusNode _titleFocusNode;
   bool _isAiLoading = false;
 
   @override
@@ -33,6 +34,12 @@ class _EditScreenState extends State<EditScreen> {
     _contentController = TextEditingController(
       text: widget.note?.content ?? '',
     );
+    _titleFocusNode = FocusNode();
+    _titleFocusNode.addListener(() {
+      if (!_titleFocusNode.hasFocus) {
+        _titleController.text = _toTitleCase(_titleController.text);
+      }
+    });
   }
 
   @override
@@ -50,6 +57,7 @@ class _EditScreenState extends State<EditScreen> {
     _titleController.dispose();
     _labelController.dispose();
     _contentController.dispose();
+    _titleFocusNode.dispose();
     super.dispose();
   }
 
@@ -140,9 +148,7 @@ class _EditScreenState extends State<EditScreen> {
     if (rawThoughts.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'edit.restructure_empty_warning'.tr(),
-          ),
+          content: Text('edit.restructure_empty_warning'.tr()),
           backgroundColor: Colors.amber,
         ),
       );
@@ -158,9 +164,7 @@ class _EditScreenState extends State<EditScreen> {
     if (!aiService.hasAnyConfiguredKey(settingsProvider.geminiApiKey)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'edit.restructure_no_key_error'.tr(),
-          ),
+          content: Text('edit.restructure_no_key_error'.tr()),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -214,9 +218,7 @@ class _EditScreenState extends State<EditScreen> {
     if (!aiService.hasAnyConfiguredKey(settingsProvider.geminiApiKey)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'edit.restructure_no_key_error'.tr(),
-          ),
+          content: Text('edit.restructure_no_key_error'.tr()),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -264,7 +266,7 @@ class _EditScreenState extends State<EditScreen> {
   }
 
   void _saveNote() {
-    final title = _titleController.text.trim();
+    final title = _toTitleCase(_titleController.text.trim());
     final label = _labelController.text.trim();
     final content = _contentController.text.trim();
 
@@ -390,7 +392,12 @@ class _EditScreenState extends State<EditScreen> {
                             // Title TextField (Transparent and massive display font)
                             TextField(
                               controller: _titleController,
+                              focusNode: _titleFocusNode,
                               autofocus: true,
+                              textCapitalization: TextCapitalization.words,
+                              onTapOutside: (event) {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                              },
                               style: theme.textTheme.displayLarge?.copyWith(
                                 fontSize: isMobile ? 36.0 : 48.0,
                                 color: theme.colorScheme.onSurface,
@@ -435,6 +442,10 @@ class _EditScreenState extends State<EditScreen> {
                                 Expanded(
                                   child: TextField(
                                     controller: _labelController,
+                                    onTapOutside: (event) {
+                                      FocusManager.instance.primaryFocus
+                                          ?.unfocus();
+                                    },
                                     style: theme.textTheme.labelLarge?.copyWith(
                                       color: theme
                                           .colorScheme
@@ -480,6 +491,12 @@ class _EditScreenState extends State<EditScreen> {
                             // Body Content Textarea
                             TextField(
                               controller: _contentController,
+                              textCapitalization: TextCapitalization.sentences,
+                              spellCheckConfiguration:
+                                  const SpellCheckConfiguration(),
+                              onTapOutside: (event) {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                              },
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 height: 1.6,
                               ),
@@ -987,4 +1004,61 @@ class _GeminiRestructureSheetState extends State<GeminiRestructureSheet> {
 
     return const SizedBox.shrink();
   }
+}
+
+String _toTitleCase(String text) {
+  if (text.isEmpty) return text;
+
+  // List of words that should remain lowercase in title case (unless first or last)
+  const lowercaseWords = {
+    'a',
+    'an',
+    'the',
+    'and',
+    'but',
+    'for',
+    'or',
+    'nor',
+    'on',
+    'in',
+    'at',
+    'by',
+    'to',
+    'of',
+    'with',
+    'about',
+  };
+
+  final words = text.split(' ');
+  final capitalizedWords = <String>[];
+
+  for (int i = 0; i < words.length; i++) {
+    final word = words[i];
+    if (word.isEmpty) {
+      capitalizedWords.add('');
+      continue;
+    }
+
+    // Preserve acronyms like AI, OS, HTML
+    if (word == word.toUpperCase() && RegExp(r'^[A-Z]+$').hasMatch(word)) {
+      capitalizedWords.add(word);
+      continue;
+    }
+
+    final cleanWord = word.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '');
+
+    if (i > 0 && i < words.length - 1 && lowercaseWords.contains(cleanWord)) {
+      capitalizedWords.add(word.toLowerCase());
+    } else {
+      if (word.length == 1) {
+        capitalizedWords.add(word.toUpperCase());
+      } else {
+        capitalizedWords.add(
+          word[0].toUpperCase() + word.substring(1).toLowerCase(),
+        );
+      }
+    }
+  }
+
+  return capitalizedWords.join(' ');
 }
