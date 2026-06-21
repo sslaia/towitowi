@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
   <link rel="icon" type="image/png" href="towitowi-icon.png">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
   <!-- Header -->
@@ -29,7 +31,7 @@
           <span class="lang-en">Disclaimer</span>
           <span class="lang-id">Penyangkalan</span>
         </a>
-        
+
         <!-- Language Switcher -->
         <div class="lang-selector-container">
           <button class="lang-btn" data-lang="en">EN</button>
@@ -44,20 +46,34 @@
     <div class="container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
       <img src="towitowi-icon.png" alt="TowiTowi Logo" class="hero-logo">
       <h1 class="font-display">TowiTowi</h1>
-      <p class="lang-en">A simple note taking app in the age of AI.</p>
-      <p class="lang-id">Aplikasi catatan sederhana di era kecerdasan buatan (AI).</p>
-      
+      <p class="lang-en" style="margin-bottom: 16px;">A simple note taking app in the age of AI.</p>
+      <p class="lang-id" style="margin-bottom: 16px;">Aplikasi catatan sederhana di era kecerdasan buatan (AI).</p>
+      <p class="lang-en"
+        style="font-size: 16px; max-width: 700px; margin: 0 auto 40px auto; opacity: 0.85; line-height: 1.7; font-weight: 300;">
+        TowiTowi is a note-taking application inspired by the towi-towi bird of Nias (Orthotomus ruficeps baeus).
+        According to local lore, when the towi-towi bird chirps, it brings good news. We hope that writing and sharing
+        your Towi notes brings happiness and good news to you and your community. Have you towied today? Start towing
+        now!
+      </p>
+      <p class="lang-id"
+        style="font-size: 16px; max-width: 700px; margin: 0 auto 40px auto; opacity: 0.85; line-height: 1.7; font-weight: 300;">
+        TowiTowi adalah aplikasi pencatat yang terinspirasi oleh burung towi-towi dari Nias (Orthotomus ruficeps baeus).
+        Menurut kepercayaan setempat, kicauan burung towi-towi membawa kabar baik. Kami berharap bahwa menulis dan
+        membagikan catatan Towi Anda membagikan kabar baik bagi Anda dan komunitas Anda. Silakan ber-towi hari ini juga!
+      </p>
+
       <div class="cta-group">
         <a href="#features" class="btn btn-primary">
           <span class="lang-en">Explore Features</span>
           <span class="lang-id">Telusuri Fitur</span>
         </a>
-        <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+        <a href="https://github.com/sslaia/towitowi" target="_blank" rel="noopener noreferrer"
+          class="btn btn-secondary">
           <span class="lang-en">View Source</span>
           <span class="lang-id">Lihat Kode Sumber</span>
         </a>
       </div>
-      
+
       <!-- Interactive Phone Mockup -->
       <div class="device-container">
         <div class="device">
@@ -73,7 +89,7 @@
                 </button>
               </div>
             </div>
-            
+
             <!-- Mock Editor Content -->
             <div class="mock-editor">
               <div class="mock-note-title">
@@ -81,7 +97,7 @@
                 <span class="lang-id">Draf Postingan Sosmed</span>
               </div>
               <div class="mock-note-body" id="mock-note-body"></div>
-              
+
               <!-- AI Toast Alert -->
               <div class="mock-ai-toast" id="mock-ai-toast">
                 <span class="sparkle-icon">✨</span>
@@ -96,7 +112,8 @@
   </section>
 
   <!-- Features Grid -->
-  <section id="features" class="section" style="background-color: var(--surface-color-low); border-top: 1px solid var(--outline);">
+  <section id="features" class="section"
+    style="background-color: var(--surface-color-low); border-top: 1px solid var(--outline);">
     <div class="container">
       <div style="text-align: center; margin-bottom: 56px;">
         <h2 style="font-size: clamp(32px, 5vw, 42px); margin-bottom: 16px;">
@@ -105,7 +122,7 @@
         </h2>
         <div style="width: 60px; height: 3px; background-color: var(--accent-red); margin: 0 auto;"></div>
       </div>
-      
+
       <div class="features-grid">
         <!-- Feature 1 -->
         <div class="feature-card">
@@ -114,8 +131,10 @@
             <span class="lang-en">AI Writing Partner</span>
             <span class="lang-id">Asisten Menulis AI</span>
           </h3>
-          <p class="lang-en">Leverage Gemini AI to refine notes, fix grammar, summarize thoughts, or transform drafts into engaging social posts.</p>
-          <p class="lang-id">Gunakan Gemini AI untuk menyempurnakan catatan, memperbaiki tata bahasa, merangkum pikiran, atau mengubah draf menjadi postingan menarik.</p>
+          <p class="lang-en">Leverage Gemini AI to refine notes, fix grammar, summarize thoughts, or transform drafts
+            into engaging social posts.</p>
+          <p class="lang-id">Gunakan Gemini AI untuk menyempurnakan catatan, memperbaiki tata bahasa, merangkum pikiran,
+            atau mengubah draf menjadi postingan menarik.</p>
         </div>
 
         <!-- Feature 2 -->
@@ -125,8 +144,10 @@
             <span class="lang-en">Inky Dark Aesthetic</span>
             <span class="lang-id">Estetika Gelap Inky</span>
           </h3>
-          <p class="lang-en">A premium high-contrast dark theme designed to provide a comfortable reading and writing environment without eye strain.</p>
-          <p class="lang-id">Tema gelap premium dengan kontras tinggi yang dirancang untuk kenyamanan membaca dan menulis tanpa membuat mata lelah.</p>
+          <p class="lang-en">A premium high-contrast dark theme designed to provide a comfortable reading and writing
+            environment without eye strain.</p>
+          <p class="lang-id">Tema gelap premium dengan kontras tinggi yang dirancang untuk kenyamanan membaca dan
+            menulis tanpa membuat mata lelah.</p>
         </div>
 
         <!-- Feature 3 -->
@@ -136,8 +157,10 @@
             <span class="lang-en">Privacy & Security First</span>
             <span class="lang-id">Privasi & Keamanan Utama</span>
           </h3>
-          <p class="lang-en">All notes are stored securely on-device using SQLite. No account registration or cloud-based data tracking required.</p>
-          <p class="lang-id">Semua catatan disimpan dengan aman di perangkat menggunakan SQLite. Tidak memerlukan pendaftaran akun atau pelacakan data cloud.</p>
+          <p class="lang-en">All notes are stored securely on-device using SQLite. No account registration or
+            cloud-based data tracking required.</p>
+          <p class="lang-id">Semua catatan disimpan dengan aman di perangkat menggunakan SQLite. Tidak memerlukan
+            pendaftaran akun atau pelacakan data cloud.</p>
         </div>
 
         <!-- Feature 4 -->
@@ -147,8 +170,10 @@
             <span class="lang-en">Rich Markdown Support</span>
             <span class="lang-id">Dukungan Rich Markdown</span>
           </h3>
-          <p class="lang-en">Structure your notes with titles, list bullets, italic or bold text, and other Markdown elements natively.</p>
-          <p class="lang-id">Susun catatan Anda dengan judul, poin daftar, teks miring atau tebal, dan elemen Markdown lainnya secara alami.</p>
+          <p class="lang-en">Structure your notes with titles, list bullets, italic or bold text, and other Markdown
+            elements natively.</p>
+          <p class="lang-id">Susun catatan Anda dengan judul, poin daftar, teks miring atau tebal, dan elemen Markdown
+            lainnya secara alami.</p>
         </div>
 
         <!-- Feature 5 -->
@@ -158,8 +183,10 @@
             <span class="lang-en">TTS & Sharing</span>
             <span class="lang-id">TTS & Berbagi</span>
           </h3>
-          <p class="lang-en">Listen to your written notes through built-in Text-to-Speech or quickly share them with other apps in one tap.</p>
-          <p class="lang-id">Dengarkan catatan tertulis Anda melalui Text-to-Speech bawaan atau bagikan dengan mudah ke aplikasi lain dalam satu ketukan.</p>
+          <p class="lang-en">Listen to your written notes through built-in Text-to-Speech or quickly share them with
+            other apps in one tap.</p>
+          <p class="lang-id">Dengarkan catatan tertulis Anda melalui Text-to-Speech bawaan atau bagikan dengan mudah ke
+            aplikasi lain dalam satu ketukan.</p>
         </div>
 
         <!-- Feature 6 -->
@@ -169,8 +196,10 @@
             <span class="lang-en">Bilingual Support</span>
             <span class="lang-id">Dukungan Dua Bahasa</span>
           </h3>
-          <p class="lang-en">Seamless switching between English and Bahasa Indonesia. Designed for both global and local audiences.</p>
-          <p class="lang-id">Peralihan mulus antara Bahasa Inggris dan Bahasa Indonesia. Dirancang untuk pengguna lokal maupun global.</p>
+          <p class="lang-en">Seamless switching between English and Bahasa Indonesia. Designed for both global and local
+            audiences.</p>
+          <p class="lang-id">Peralihan mulus antara Bahasa Inggris dan Bahasa Indonesia. Dirancang untuk pengguna lokal
+            maupun global.</p>
         </div>
       </div>
     </div>
@@ -234,10 +263,10 @@
 
     function updateSimulatorLang(lang) {
       if (isTransitioning) return;
-      
+
       const data = notesData[lang];
       mockNoteBody.textContent = isEnhanced ? data.enhanced : data.initial;
-      
+
       if (isEnhanced) {
         btnTextEn.textContent = notesData.en.btnReset;
         btnTextId.textContent = notesData.id.btnReset;
@@ -256,7 +285,7 @@
     function setLanguage(lang) {
       htmlEl.setAttribute('lang', lang);
       localStorage.setItem('towitowi-lang', lang);
-      
+
       // Update interactive simulator content based on language
       updateSimulatorLang(lang);
     }
@@ -286,15 +315,15 @@
         setTimeout(() => {
           isEnhanced = true;
           mockNoteBody.style.opacity = '0';
-          
+
           setTimeout(() => {
             mockNoteBody.textContent = notesData[currentLang].enhanced;
             mockNoteBody.style.opacity = '1';
             mockNoteBody.style.transition = 'opacity 0.5s ease';
-            
+
             btnTextEn.textContent = notesData.en.btnReset;
             btnTextId.textContent = notesData.id.btnReset;
-            
+
             mockAiToast.classList.remove('active');
             mockAiBtn.style.opacity = '1';
             isTransitioning = false;
@@ -305,7 +334,7 @@
         // Reset to initial
         isEnhanced = false;
         mockNoteBody.textContent = notesData[currentLang].initial;
-        
+
         btnTextEn.textContent = notesData.en.btnEnhance;
         btnTextId.textContent = notesData.id.btnEnhance;
       }
@@ -315,4 +344,5 @@
     mockNoteBody.textContent = notesData[savedLang].initial;
   </script>
 </body>
+
 </html>
