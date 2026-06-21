@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TowiTowi - AI-Powered Notes</title>
+  <link rel="icon" type="image/png" href="towitowi-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-container">
+      <a href="index.html" class="logo-link">
+        <img src="towitowi-icon.png" alt="TowiTowi Logo" class="logo-img">
+        <span>TowiTowi</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#features" class="nav-item">
+          <span class="lang-en">Features</span>
+          <span class="lang-id">Fitur</span>
+        </a>
+        <a href="privacy-policy.html" class="nav-item">
+          <span class="lang-en">Privacy Policy</span>
+          <span class="lang-id">Kebijakan Privasi</span>
+        </a>
+        <a href="disclaimer.html" class="nav-item">
+          <span class="lang-en">Disclaimer</span>
+          <span class="lang-id">Penyangkalan</span>
+        </a>
+        
+        <!-- Language Switcher -->
+        <div class="lang-selector-container">
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="id">ID</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="section hero">
+    <div class="container" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+      <img src="towitowi-icon.png" alt="TowiTowi Logo" class="hero-logo">
+      <h1 class="font-display">TowiTowi</h1>
+      <p class="lang-en">A simple note taking app in the age of AI.</p>
+      <p class="lang-id">Aplikasi catatan sederhana di era kecerdasan buatan (AI).</p>
+      
+      <div class="cta-group">
+        <a href="#features" class="btn btn-primary">
+          <span class="lang-en">Explore Features</span>
+          <span class="lang-id">Telusuri Fitur</span>
+        </a>
+        <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+          <span class="lang-en">View Source</span>
+          <span class="lang-id">Lihat Kode Sumber</span>
+        </a>
+      </div>
+      
+      <!-- Interactive Phone Mockup -->
+      <div class="device-container">
+        <div class="device">
+          <div class="device-screen">
+            <!-- Mock Header -->
+            <div class="mock-header">
+              <span class="mock-title">TowiTowi</span>
+              <div class="mock-actions">
+                <button class="mock-btn" id="mock-ai-btn">
+                  <span>✨</span>
+                  <span class="lang-en" id="btn-text-en">AI Enhance</span>
+                  <span class="lang-id" id="btn-text-id">Tingkatkan AI</span>
+                </button>
+              </div>
+            </div>
+            
+            <!-- Mock Editor Content -->
+            <div class="mock-editor">
+              <div class="mock-note-title">
+                <span class="lang-en">Social Post Draft</span>
+                <span class="lang-id">Draf Postingan Sosmed</span>
+              </div>
+              <div class="mock-note-body" id="mock-note-body"></div>
+              
+              <!-- AI Toast Alert -->
+              <div class="mock-ai-toast" id="mock-ai-toast">
+                <span class="sparkle-icon">✨</span>
+                <span class="toast-text lang-en">Gemini is rewriting your draft...</span>
+                <span class="toast-text lang-id">Gemini sedang memformat draf Anda...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="features" class="section" style="background-color: var(--surface-color-low); border-top: 1px solid var(--outline);">
+    <div class="container">
+      <div style="text-align: center; margin-bottom: 56px;">
+        <h2 style="font-size: clamp(32px, 5vw, 42px); margin-bottom: 16px;">
+          <span class="lang-en">Designed for Writers. Powered by AI.</span>
+          <span class="lang-id">Dirancang untuk Penulis. Ditenagai oleh AI.</span>
+        </h2>
+        <div style="width: 60px; height: 3px; background-color: var(--accent-red); margin: 0 auto;"></div>
+      </div>
+      
+      <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🪄</div>
+          <h3>
+            <span class="lang-en">AI Writing Partner</span>
+            <span class="lang-id">Asisten Menulis AI</span>
+          </h3>
+          <p class="lang-en">Leverage Gemini AI to refine notes, fix grammar, summarize thoughts, or transform drafts into engaging social posts.</p>
+          <p class="lang-id">Gunakan Gemini AI untuk menyempurnakan catatan, memperbaiki tata bahasa, merangkum pikiran, atau mengubah draf menjadi postingan menarik.</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🌙</div>
+          <h3>
+            <span class="lang-en">Inky Dark Aesthetic</span>
+            <span class="lang-id">Estetika Gelap Inky</span>
+          </h3>
+          <p class="lang-en">A premium high-contrast dark theme designed to provide a comfortable reading and writing environment without eye strain.</p>
+          <p class="lang-id">Tema gelap premium dengan kontras tinggi yang dirancang untuk kenyamanan membaca dan menulis tanpa membuat mata lelah.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🔒</div>
+          <h3>
+            <span class="lang-en">Privacy & Security First</span>
+            <span class="lang-id">Privasi & Keamanan Utama</span>
+          </h3>
+          <p class="lang-en">All notes are stored securely on-device using SQLite. No account registration or cloud-based data tracking required.</p>
+          <p class="lang-id">Semua catatan disimpan dengan aman di perangkat menggunakan SQLite. Tidak memerlukan pendaftaran akun atau pelacakan data cloud.</p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">✍️</div>
+          <h3>
+            <span class="lang-en">Rich Markdown Support</span>
+            <span class="lang-id">Dukungan Rich Markdown</span>
+          </h3>
+          <p class="lang-en">Structure your notes with titles, list bullets, italic or bold text, and other Markdown elements natively.</p>
+          <p class="lang-id">Susun catatan Anda dengan judul, poin daftar, teks miring atau tebal, dan elemen Markdown lainnya secara alami.</p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🔊</div>
+          <h3>
+            <span class="lang-en">TTS & Sharing</span>
+            <span class="lang-id">TTS & Berbagi</span>
+          </h3>
+          <p class="lang-en">Listen to your written notes through built-in Text-to-Speech or quickly share them with other apps in one tap.</p>
+          <p class="lang-id">Dengarkan catatan tertulis Anda melalui Text-to-Speech bawaan atau bagikan dengan mudah ke aplikasi lain dalam satu ketukan.</p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">🌐</div>
+          <h3>
+            <span class="lang-en">Bilingual Support</span>
+            <span class="lang-id">Dukungan Dua Bahasa</span>
+          </h3>
+          <p class="lang-en">Seamless switching between English and Bahasa Indonesia. Designed for both global and local audiences.</p>
+          <p class="lang-id">Peralihan mulus antara Bahasa Inggris dan Bahasa Indonesia. Dirancang untuk pengguna lokal maupun global.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-logo">
+        <img src="towitowi-icon.png" alt="TowiTowi Logo">
+        <span>TowiTowi</span>
+      </div>
+      <div class="footer-links">
+        <a href="#features">
+          <span class="lang-en">Features</span>
+          <span class="lang-id">Fitur</span>
+        </a>
+        <a href="privacy-policy.html">
+          <span class="lang-en">Privacy Policy</span>
+          <span class="lang-id">Kebijakan Privasi</span>
+        </a>
+        <a href="disclaimer.html">
+          <span class="lang-en">Disclaimer</span>
+          <span class="lang-id">Penyangkalan</span>
+        </a>
+      </div>
+      <p style="font-size: 13px; opacity: 0.6;">
+        &copy; 2026 TowiTowi.
+        <span class="lang-en">All rights reserved.</span>
+        <span class="lang-id">Hak cipta dilindungi undang-undang.</span>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // ----------------------------------------------------
+    // Interactive Phone Mockup Simulator
+    // ----------------------------------------------------
+    const notesData = {
+      en: {
+        initial: "Drafting a tweet for the new update:\nTowiTowi version 0.1 is here! It is a dark mode note taking app. Very simple. Stored locally. Uses Gemini.",
+        enhanced: "🚀 Introducing TowiTowi 0.1!\n\nA minimalist note-taking app designed for the AI era.\n\n✨ Features:\n• Inky dark aesthetic\n• AI assistance via Gemini\n• Secure local SQLite storage\n\nTry it now! #AI #Productivity #Flutter",
+        btnEnhance: "AI Enhance",
+        btnReset: "Reset Note"
+      },
+      id: {
+        initial: "Draf tweet untuk pembaruan baru:\nTowiTowi versi 0.1 sudah rilis! Ini aplikasi catatan mode gelap. Sangat sederhana. Disimpan lokal. Pake Gemini.",
+        enhanced: "🚀 Memperkenalkan TowiTowi 0.1!\n\nAplikasi catatan minimalis yang dirancang khusus untuk era AI.\n\n✨ Fitur:\n• Estetika mode gelap inky\n• Asisten AI lewat Gemini\n• Penyimpanan SQLite lokal yang aman\n\nCoba sekarang! #AI #Produktivitas #Flutter",
+        btnEnhance: "Tingkatkan AI",
+        btnReset: "Atur Ulang"
+      }
+    };
+
+    let isEnhanced = false;
+    let isTransitioning = false;
+    const mockNoteBody = document.getElementById('mock-note-body');
+    const mockAiBtn = document.getElementById('mock-ai-btn');
+    const mockAiToast = document.getElementById('mock-ai-toast');
+    const btnTextEn = document.getElementById('btn-text-en');
+    const btnTextId = document.getElementById('btn-text-id');
+
+    function updateSimulatorLang(lang) {
+      if (isTransitioning) return;
+      
+      const data = notesData[lang];
+      mockNoteBody.textContent = isEnhanced ? data.enhanced : data.initial;
+      
+      if (isEnhanced) {
+        btnTextEn.textContent = notesData.en.btnReset;
+        btnTextId.textContent = notesData.id.btnReset;
+      } else {
+        btnTextEn.textContent = notesData.en.btnEnhance;
+        btnTextId.textContent = notesData.id.btnEnhance;
+      }
+    }
+
+    // ----------------------------------------------------
+    // Language Toggle Handler
+    // ----------------------------------------------------
+    const langButtons = document.querySelectorAll('.lang-btn');
+    const htmlEl = document.documentElement;
+
+    function setLanguage(lang) {
+      htmlEl.setAttribute('lang', lang);
+      localStorage.setItem('towitowi-lang', lang);
+      
+      // Update interactive simulator content based on language
+      updateSimulatorLang(lang);
+    }
+
+    // Initial Load
+    const savedLang = localStorage.getItem('towitowi-lang') || 'en';
+    setLanguage(savedLang);
+
+    langButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-lang');
+        setLanguage(lang);
+      });
+    });
+
+    mockAiBtn.addEventListener('click', () => {
+      if (isTransitioning) return;
+
+      const currentLang = htmlEl.getAttribute('lang') || 'en';
+
+      if (!isEnhanced) {
+        // Run AI Enhance simulation
+        isTransitioning = true;
+        mockAiBtn.style.opacity = '0.5';
+        mockAiToast.classList.add('active');
+
+        setTimeout(() => {
+          isEnhanced = true;
+          mockNoteBody.style.opacity = '0';
+          
+          setTimeout(() => {
+            mockNoteBody.textContent = notesData[currentLang].enhanced;
+            mockNoteBody.style.opacity = '1';
+            mockNoteBody.style.transition = 'opacity 0.5s ease';
+            
+            btnTextEn.textContent = notesData.en.btnReset;
+            btnTextId.textContent = notesData.id.btnReset;
+            
+            mockAiToast.classList.remove('active');
+            mockAiBtn.style.opacity = '1';
+            isTransitioning = false;
+          }, 300);
+        }, 1500);
+
+      } else {
+        // Reset to initial
+        isEnhanced = false;
+        mockNoteBody.textContent = notesData[currentLang].initial;
+        
+        btnTextEn.textContent = notesData.en.btnEnhance;
+        btnTextId.textContent = notesData.id.btnEnhance;
+      }
+    });
+
+    // Set initial text inside phone screen body
+    mockNoteBody.textContent = notesData[savedLang].initial;
+  </script>
+</body>
+</html>
