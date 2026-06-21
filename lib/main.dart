@@ -6,6 +6,7 @@ import 'providers/settings_provider.dart';
 import 'services/ai_content_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/home_screen.dart';
+import 'screens/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,7 +40,22 @@ class MainApp extends StatelessWidget {
       locale: context.locale,
       title: 'TowiTowi',
       theme: AppTheme.darkTheme,
-      home: const HomeScreen(),
+      home: Consumer<SettingsProvider>(
+        builder: (context, settings, _) {
+          if (!settings.isInitialized) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(
+                  color: AppTheme.primaryContainer,
+                ),
+              ),
+            );
+          }
+          return settings.isOnboardingCompleted
+              ? const HomeScreen()
+              : const OnboardingScreen();
+        },
+      ),
       debugShowCheckedModeBanner: false,
     );
   }

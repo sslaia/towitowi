@@ -143,5 +143,24 @@
     "description": "TowiTowi is a note-taking application inspired by the Towitowi bird of Nias (Orthotomus ruficeps baeus). According to local lore, when the Towitowi bird chirps, it brings good news. We hope that writing and sharing your Towi notes brings happiness and good news to you and your community.",
     "view_licenses": "View Licenses",
     "copyright": "© 2026 io.github.sslaia.towitowi"
+  },
+  "onboarding": {
+    "replay_tutorial": "REPLAY TUTORIAL",
+    "skip": "SKIP",
+    "next": "NEXT",
+    "back": "BACK",
+    "start": "START TOWI-ING",
+    "language_title": "Choose Language / Pilih Bahasa",
+    "intro_title": "Capture Your Thoughts",
+    "intro_desc": "TowiTowi is a note-taking app that also works as your daily journal. Jot down your fleeting thoughts or write deep entries.",
+    "gemini_title": "Gemini AI Assistant",
+    "gemini_desc": "Need a little help to give structure to your fleeting thoughts or to share your thoughts with the world? Click on the Gemini button and see the magic happen.",
+    "customize_title": "Make Gemini Your Own",
+    "customize_desc": "Adjust the writing style by providing your own article sample. Gemini will learn your style and help restructure your notes in your own style. For this to work, please enter your Gemini API key.",
+    "gemini_key_hint": "Enter Gemini API Key (optional)...",
+    "sample_hint": "Paste your article sample here (optional)...",
+    "lore_title": "The Chirp of Towitowi",
+    "lore_desc": "The name TowiTowi is taken from the Nias bird towi-towi (Orthotomus ruficeps baeus). According to local lore, when the towi-towi bird chirps, it brings good news.",
+    "lore_question": "We hope that your Towi notes brings good news to you and the world. Have you towi-ed yet? Start towi-ing now!"
   }
 }

@@ -7,6 +7,7 @@ class SettingsProvider with ChangeNotifier {
   static const String _bookmarksKey = 'bookmarked_note_ids';
   static const String _geminiApiKeyKey = 'secure_gemini_api_key';
   static const String _legacyGeminiApiKeyKey = 'settings_gemini_api_key';
+  static const String _onboardingCompletedKey = 'settings_onboarding_completed';
 
   static const String _writingStyleInstructionEnKey = 'settings_writing_style_instruction_en';
   static const String _writingStyleInstructionIdKey = 'settings_writing_style_instruction_id';
@@ -18,6 +19,7 @@ class SettingsProvider with ChangeNotifier {
   Set<String> _bookmarkedIds = {};
   String _geminiApiKey = '';
   bool _initialized = false;
+  bool _onboardingCompleted = false;
 
   String _writingStyleInstructionEn = '';
   String _writingStyleInstructionId = '';
@@ -31,6 +33,7 @@ class SettingsProvider with ChangeNotifier {
   bool get isInitialized => _initialized;
   Set<String> get bookmarkedIds => _bookmarkedIds;
   String get geminiApiKey => _geminiApiKey;
+  bool get isOnboardingCompleted => _onboardingCompleted;
 
   Future<void> _loadPreferences() async {
     try {
@@ -62,11 +65,36 @@ class SettingsProvider with ChangeNotifier {
       _writingStyleInstructionId = prefs.getString(_writingStyleInstructionIdKey) ?? StyleReferences.defaultInstructionId;
       _writingStyleSamplesEn = prefs.getStringList(_writingStyleSamplesEnKey) ?? List.from(StyleReferences.defaultArticlesEn);
       _writingStyleSamplesId = prefs.getStringList(_writingStyleSamplesIdKey) ?? List.from(StyleReferences.defaultArticlesId);
+      
+      // Load onboarding status
+      _onboardingCompleted = prefs.getBool(_onboardingCompletedKey) ?? false;
     } catch (e) {
       debugPrint('Error loading preferences: $e');
     } finally {
       _initialized = true;
       notifyListeners();
+    }
+  }
+
+  Future<void> completeOnboarding() async {
+    _onboardingCompleted = true;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_onboardingCompletedKey, true);
+    } catch (e) {
+      debugPrint('Error saving onboarding preference: $e');
+    }
+  }
+
+  Future<void> resetOnboarding() async {
+    _onboardingCompleted = false;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_onboardingCompletedKey, false);
+    } catch (e) {
+      debugPrint('Error resetting onboarding preference: $e');
     }
   }
 

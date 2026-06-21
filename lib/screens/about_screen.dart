@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../widgets/top_bar.dart';
+import 'onboarding_screen.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -161,6 +162,42 @@ class AboutScreen extends StatelessWidget {
                     icon: const Icon(Icons.description_outlined, size: 18.0),
                     label: Text(
                       'about.view_licenses'.tr().toUpperCase(),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: theme.colorScheme.primaryContainer,
+                      side: BorderSide(
+                        color: theme.colorScheme.primaryContainer.withValues(
+                          alpha: 0.5,
+                        ),
+                        width: 1.5,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 12.0,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const OnboardingScreen(isReplay: true),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.auto_stories_outlined, size: 18.0),
+                    label: Text(
+                      'onboarding.replay_tutorial'.tr().toUpperCase(),
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.0,
