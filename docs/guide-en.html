@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini AI Setup Guide - TowiTowi</title>
+  <link rel="icon" type="image/png" href="towitowi-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-container">
+      <a href="index.html" class="logo-link">
+        <img src="towitowi-icon.png" alt="TowiTowi Logo" class="logo-img">
+        <span>TowiTowi</span>
+      </a>
+      <nav class="nav-links">
+        <!-- Language Switcher -->
+        <div class="lang-selector-container">
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="id">ID</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container legal-page">
+    <div class="legal-header">
+      <h1>Gemini AI Setup Guide</h1>
+      <p>Configure your personal AI writing assistant in TowiTowi</p>
+    </div>
+
+    <div class="legal-content">
+      <p>
+        If you want to use Gemini AI to help with restructuring your notes or crafting your social media posts, you need to provide a Gemini API key from Google AI Studio. Here is how you can get it and use it in the TowiTowi app.
+      </p>
+
+      <h2>1. Login to AI Studio</h2>
+      <ol>
+        <li>Go to <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" class="ext-link">aistudio.google.com</a></li>
+        <li>Click on <strong>Get started</strong></li>
+        <li>Login with your Gmail account</li>
+        <li>Inside AI Studio, look for <strong>MANAGE</strong> in the left menu</li>
+        <li>Click on <strong>Dashboard</strong>. You will see the list of API keys</li>
+      </ol>
+
+      <h2>2. Create the TowiTowi project</h2>
+      <ol>
+        <li>Click on <strong>Projects</strong> in the left menu</li>
+        <li>Click <strong>Create a new project</strong> in the top right corner</li>
+        <li>Enter the project name: <code>TowiTowi</code></li>
+        <li>Click <strong>Create project</strong></li>
+      </ol>
+
+      <h2>3. Create the API key</h2>
+      <ol>
+        <li>Click on <strong>Create API key</strong> in the top right corner</li>
+        <li>In the form, enter <code>TowiTowi Gemini API key</code> in the "Name your key" field</li>
+        <li>Choose <code>TowiTowi</code> in the "Choose an imported project" dropdown</li>
+        <li>Click <strong>Create key</strong></li>
+        <li>Copy the API key provided (you can also copy it later)</li>
+      </ol>
+
+      <h2>4. Copy the API key</h2>
+      <ol>
+        <li>From the list of API keys, click on <code>TowiTowi Gemini API key</code> in the "Key" column</li>
+        <li>You will see the API Key. Click on the copy icon at the end of the API key</li>
+      </ol>
+
+      <h2>5. Use the API key in TowiTowi app</h2>
+      <ol>
+        <li>Run the <strong>TowiTowi</strong> app</li>
+        <li>Click on the <strong>Menu</strong> (bottom left corner)</li>
+        <li>Click on <strong>Settings</strong></li>
+        <li>Enter the previously copied API key in <code>GEMINI API KEY</code></li>
+      </ol>
+
+      <h2>Addition: Style Personalization</h2>
+      <p>
+        If you want to use AI to tidy up your writing and create social media posts, it might be a good idea to have Gemini AI adapt your writing style.
+      </p>
+      <p>
+        To do this, enter instructions in the <code>SYSTEM INSTRUCTIONS</code> field. Then, enter examples of Reference Articles in the <code>STYLE REFERENCE ARTICLES</code> field. For example, copy three different articles you've written in the past that reflect your own style.
+      </p>
+      <p>
+        Good luck!
+      </p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-logo">
+        <img src="towitowi-icon.png" alt="TowiTowi Logo">
+        <span>TowiTowi</span>
+      </div>
+      <div class="footer-links">
+        <a href="index.html#features">
+          <span>Features</span>
+        </a>
+        <a href="guide-en.html">Gemini Guide</a>
+        <a href="privacy-policy.html">
+          <span>Privacy Policy</span>
+        </a>
+        <a href="disclaimer.html">
+          <span>Disclaimer</span>
+        </a>
+      </div>
+      <p style="font-size: 13px; opacity: 0.6;">
+        &copy; 2026 TowiTowi. All rights reserved.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Language Toggle / Redirection Handler
+    const langButtons = document.querySelectorAll('.lang-btn');
+    const htmlEl = document.documentElement;
+
+    function setLanguage(lang) {
+      localStorage.setItem('towitowi-lang', lang);
+      if (lang === 'id') {
+        window.location.href = 'guide-id.html';
+      } else {
+        htmlEl.setAttribute('lang', lang);
+      }
+    }
+
+    // Initial Load - if Indonesian is selected, automatically redirect to the Indonesian guide
+    const savedLang = localStorage.getItem('towitowi-lang') || 'en';
+    if (savedLang === 'id') {
+      window.location.href = 'guide-id.html';
+    } else {
+      setLanguage('en');
+    }
+
+    langButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-lang');
+        setLanguage(lang);
+      });
+    });
+  </script>
+</body>
+</html>

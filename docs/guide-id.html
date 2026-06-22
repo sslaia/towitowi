@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panduan Pengaturan Gemini AI - TowiTowi</title>
+  <link rel="icon" type="image/png" href="towitowi-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-container">
+      <a href="index.html" class="logo-link">
+        <img src="towitowi-icon.png" alt="TowiTowi Logo" class="logo-img">
+        <span>TowiTowi</span>
+      </a>
+      <nav class="nav-links">
+        <!-- Language Switcher -->
+        <div class="lang-selector-container">
+          <button class="lang-btn" data-lang="en">EN</button>
+          <button class="lang-btn" data-lang="id">ID</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container legal-page">
+    <div class="legal-header">
+      <h1>Panduan Pengaturan Gemini AI</h1>
+      <p>Konfigurasikan asisten menulis AI pribadi Anda di TowiTowi</p>
+    </div>
+
+    <div class="legal-content">
+      <p>
+        Bila Anda ingin menggunakan Gemini AI untuk membantu merapikan catatan atau membuat postingan media sosial, Anda memerlukan Kunci API Gemini dari Google AI Studio. Berikut cara mendapatkan dan menggunakannya di aplikasi TowiTowi.
+      </p>
+
+      <h2>1. Login ke AI Studio di Browser</h2>
+      <ol>
+        <li>Buka <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" class="ext-link">aistudio.google.com</a></li>
+        <li>Klik tombol <strong>Get started</strong></li>
+        <li>Login menggunakan akun Gmail Anda</li>
+        <li>Di dalam AI Studio, cari menu <strong>MANAGE</strong> di bilah navigasi sebelah kiri</li>
+        <li>Klik menu <strong>Dashboard</strong> untuk melihat daftar Kunci API Anda</li>
+      </ol>
+
+      <h2>2. Membuat Proyek TowiTowi</h2>
+      <ol>
+        <li>Klik menu <strong>Projects</strong> di sebelah kiri</li>
+        <li>Klik tombol <strong>Create a new project</strong> di sudut kanan atas</li>
+        <li>Masukkan nama proyek: <code>TowiTowi</code></li>
+        <li>Klik tombol <strong>Create project</strong></li>
+      </ol>
+
+      <h2>3. Membuat Kunci API</h2>
+      <ol>
+        <li>Klik tombol <strong>Create API key</strong> di sudut kanan atas</li>
+        <li>Pada formulir yang muncul, masukkan <code>TowiTowi Gemini API key</code> di bidang "Name your key"</li>
+        <li>Pilih <code>TowiTowi</code> pada bagian dropdown "Choose an imported project"</li>
+        <li>Klik tombol <strong>Create key</strong></li>
+        <li>Salin Kunci API yang ditampilkan (Anda juga dapat menyalinnya nanti)</li>
+      </ol>
+
+      <h2>4. Menyalin Kunci API</h2>
+      <ol>
+        <li>Dari daftar kunci API, klik <code>TowiTowi Gemini API key</code> di kolom "Key"</li>
+        <li>Kunci API Anda akan terlihat. Klik ikon salin di ujung kanan Kunci API tersebut</li>
+      </ol>
+
+      <h2>5. Memasang Kunci API di Aplikasi TowiTowi</h2>
+      <ol>
+        <li>Buka aplikasi <strong>TowiTowi</strong> Anda</li>
+        <li>Klik <strong>Menu</strong> (ikon di sudut kiri bawah)</li>
+        <li>Pilih <strong>Settings</strong> (Setelan)</li>
+        <li>Masukkan Kunci API yang sudah Anda salin sebelumnya pada kolom <code>KUNCI API GEMINI</code></li>
+      </ol>
+
+      <h2>Tambahan: Personalisasi Gaya Penulisan</h2>
+      <p>
+        Bila Anda ingin asisten AI merapikan tulisan atau membuat draf postingan dengan gaya penulisan Anda sendiri, Anda dapat meminta Gemini AI untuk menyesuaikannya.
+      </p>
+      <p>
+        Caranya, masukkan petunjuk atau gaya yang Anda inginkan pada kolom <code>INSTRUKSI SISTEM</code>. Kemudian, masukkan contoh tulisan Anda sebelumnya pada kolom <code>ARTIKEL REFERENSI GAYA</code>. Contohnya, salin dan tempel tiga artikel berbeda yang pernah Anda tulis yang mencerminkan gaya khas Anda.
+      </p>
+      <p>
+        Selamat mencoba dan ber-Towi!
+      </p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-logo">
+        <img src="towitowi-icon.png" alt="TowiTowi Logo">
+        <span>TowiTowi</span>
+      </div>
+      <div class="footer-links">
+        <a href="index.html#features">
+          <span>Fitur</span>
+        </a>
+        <a href="guide-id.html">Panduan Gemini</a>
+        <a href="privacy-policy.html">
+          <span>Kebijakan Privasi</span>
+        </a>
+        <a href="disclaimer.html">
+          <span>Penyangkalan</span>
+        </a>
+      </div>
+      <p style="font-size: 13px; opacity: 0.6;">
+        &copy; 2026 TowiTowi. Hak cipta dilindungi undang-undang.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Language Toggle / Redirection Handler
+    const langButtons = document.querySelectorAll('.lang-btn');
+    const htmlEl = document.documentElement;
+
+    function setLanguage(lang) {
+      localStorage.setItem('towitowi-lang', lang);
+      if (lang === 'en') {
+        window.location.href = 'guide-en.html';
+      } else {
+        htmlEl.setAttribute('lang', lang);
+      }
+    }
+
+    // Initial Load - if English is selected, automatically redirect to the English guide
+    const savedLang = localStorage.getItem('towitowi-lang') || 'id';
+    if (savedLang === 'en') {
+      window.location.href = 'guide-en.html';
+    } else {
+      setLanguage('id');
+    }
+
+    langButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const lang = btn.getAttribute('data-lang');
+        setLanguage(lang);
+      });
+    });
+  </script>
+</body>
+</html>
