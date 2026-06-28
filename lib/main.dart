@@ -34,29 +34,30 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      localizationsDelegates: context.localizationDelegates,
-      supportedLocales: context.supportedLocales,
-      locale: context.locale,
-      title: 'TowiTowi',
-      theme: AppTheme.darkTheme,
-      home: Consumer<SettingsProvider>(
-        builder: (context, settings, _) {
-          if (!settings.isInitialized) {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(
-                  color: AppTheme.primaryContainer,
-                ),
-              ),
-            );
-          }
-          return settings.isOnboardingCompleted
-              ? const HomeScreen()
-              : const OnboardingScreen();
-        },
-      ),
-      debugShowCheckedModeBanner: false,
+    return Consumer<SettingsProvider>(
+      builder: (context, settings, _) {
+        return MaterialApp(
+          localizationsDelegates: context.localizationDelegates,
+          supportedLocales: context.supportedLocales,
+          locale: context.locale,
+          title: 'TowiTowi',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: settings.themeMode,
+          home: !settings.isInitialized
+              ? const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(
+                      color: AppTheme.primaryContainer,
+                    ),
+                  ),
+                )
+              : (settings.isOnboardingCompleted
+                  ? const HomeScreen()
+                  : const OnboardingScreen()),
+          debugShowCheckedModeBanner: false,
+        );
+      },
     );
   }
 }

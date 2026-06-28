@@ -127,7 +127,9 @@ class BottomBar extends StatelessWidget {
                 height: 64.0,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.black,
+                  color: theme.brightness == Brightness.dark
+                      ? Colors.black
+                      : theme.colorScheme.surface,
                   boxShadow: [
                     BoxShadow(
                       color: theme.colorScheme.primaryContainer.withValues(

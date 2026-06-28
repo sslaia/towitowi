@@ -12,6 +12,7 @@ import 'detail_screen.dart';
 import 'edit_screen.dart';
 import 'about_screen.dart';
 import '../services/backup_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -179,6 +180,39 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
+  void _navigateToSettings() {
+    setState(() {
+      _currentTab = 4;
+      _searchQuery = '';
+      _searchController.clear();
+      _showAllNotes = false;
+    });
+  }
+
+  Future<void> _launchGeminiGuide() async {
+    final langCode = context.locale.languageCode;
+    final urlString = langCode == 'id'
+        ? 'https://sslaia.github.io/towitowi/guide-id.html'
+        : 'https://sslaia.github.io/towitowi/guide-en.html';
+    final url = Uri.parse(urlString);
+    try {
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch $urlString';
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to open guide: $e'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Provider.of<SettingsProvider>(context);
@@ -251,7 +285,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ],
                   ),
                 ),
-                const Divider(color: Colors.white10, height: 1),
+                Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2), height: 1),
                 // Scrollable content of Drawer
                 Expanded(
                   child: ListView(
@@ -296,12 +330,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         index: 4,
                         theme: theme,
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 24.0,
                           vertical: 8.0,
                         ),
-                        child: Divider(color: Colors.white10),
+                        child: Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
                       ),
                       _buildDrawerAboutItem(),
                     ],
@@ -372,7 +406,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           // Push to edit screen in creation mode
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const EditScreen()),
+            MaterialPageRoute(
+              builder: (context) => EditScreen(
+                onSettingsRedirect: () {
+                  Navigator.pop(context); // Pop EditScreen
+                  _navigateToSettings();
+                },
+              ),
+            ),
           );
         },
         onMenuPressed: () {
@@ -509,7 +550,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           // Navigation Sidebar (Replaces BottomBar on desktop)
           _buildNavigationRail(theme),
 
-          const VerticalDivider(width: 1, thickness: 1, color: Colors.white10),
+          VerticalDivider(width: 1, thickness: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
 
           // Master Pane: Notes list
           SizedBox(
@@ -547,7 +588,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
           ),
 
-          const VerticalDivider(width: 1, thickness: 1, color: Colors.white10),
+          VerticalDivider(width: 1, thickness: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
 
           // Detail/Editor Pane
           Expanded(
@@ -583,6 +624,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               _isEditingRightPane = false;
                             });
                           },
+                          onSettingsRedirect: _navigateToSettings,
                         )
                       : DetailScreen(
                           note: selectedNote!,
@@ -591,6 +633,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               _isEditingRightPane = true;
                             });
                           },
+                          onSettingsRedirect: _navigateToSettings,
                         )),
           ),
         ],
@@ -638,8 +681,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         children: [
           // Hero Background Image (Calming Dusk River)
           Positioned.fill(
-            child: Image.network(
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuB5JG3MY5gSYiunlk5lIsd_dJGz72I4-KoUxBNwZhQAdR8Jn82ECapg9Ev99T0ekMstN-d7JotxvTtHoQ9_RxirNZ2Kj1dkDj2MqX_m5jKkTd5pNGM0TTMrJzhGFXkDY7QvPvXi5qMMKx5zZDNVDMWyo8LKx07DhRFKRdKsPgvlB3MOeQsZaiXiBLXOJfuX92QqHUDL2fJmDfvKR16rnepbIPOLlqRln6JV4QR7yfuj5fkWdAYypbOgBN8ex852-PqBqw8XLg1w3kM',
+            child: Image.asset(
+              'assets/images/towitowi.webp',
               fit: BoxFit.cover,
             ),
           ),
@@ -692,16 +735,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         decoration: InputDecoration(
           hintText: 'home.search_hint'.tr(),
           hintStyle: TextStyle(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
           ),
           prefixIcon: Icon(
             Icons.search,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
           filled: true,
-          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
-            alpha: 0.1,
-          ),
+          fillColor: theme.brightness == Brightness.dark
+              ? const Color(0xFF1F1F1F)
+              : theme.colorScheme.surfaceContainer,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
             borderSide: BorderSide.none,
@@ -823,7 +866,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => DetailScreen(note: note),
+                  builder: (context) => DetailScreen(
+                    note: note,
+                    onSettingsRedirect: () {
+                      Navigator.pop(context); // Pop DetailScreen
+                      _navigateToSettings();
+                    },
+                  ),
                 ),
               );
             } else {
@@ -933,6 +982,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _buildSettingsContent(BuildContext context, bool isMobile) {
     final theme = Theme.of(context);
     final currentLocale = context.locale;
+    final settingsProvider = Provider.of<SettingsProvider>(context);
 
     return Center(
       child: Container(
@@ -983,7 +1033,63 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ],
             ),
             const SizedBox(height: 32.0),
-            const Divider(color: Colors.white10),
+            Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
+            const SizedBox(height: 24.0),
+
+            // Theme Selector Section Header
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'account.theme_mode'.tr().toUpperCase(),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.secondaryContainer,
+                  letterSpacing: 1.5,
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+
+            // Theme Selection Buttons Row
+            Row(
+              children: [
+                Expanded(
+                  child: _buildThemeCard(
+                    context,
+                    label: 'account.theme_mode_system'.tr(),
+                    mode: ThemeMode.system,
+                    isActive: settingsProvider.themeMode == ThemeMode.system,
+                    theme: theme,
+                    icon: Icons.brightness_auto_rounded,
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: _buildThemeCard(
+                    context,
+                    label: 'account.theme_mode_light'.tr(),
+                    mode: ThemeMode.light,
+                    isActive: settingsProvider.themeMode == ThemeMode.light,
+                    theme: theme,
+                    icon: Icons.light_mode_rounded,
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                Expanded(
+                  child: _buildThemeCard(
+                    context,
+                    label: 'account.theme_mode_dark'.tr(),
+                    mode: ThemeMode.dark,
+                    isActive: settingsProvider.themeMode == ThemeMode.dark,
+                    theme: theme,
+                    icon: Icons.dark_mode_rounded,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32.0),
+            Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
             const SizedBox(height: 24.0),
 
             // Backup & Restore Section Header
@@ -1015,9 +1121,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 Expanded(
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFFFE16D),
-                      side: const BorderSide(
-                        color: Color(0xFFFFE16D),
+                      foregroundColor: theme.brightness == Brightness.dark
+                          ? const Color(0xFFFFE16D)
+                          : theme.colorScheme.primaryContainer,
+                      side: BorderSide(
+                        color: theme.brightness == Brightness.dark
+                            ? const Color(0xFFFFE16D)
+                            : theme.colorScheme.primaryContainer,
                         width: 1.5,
                       ),
                       shape: RoundedRectangleBorder(
@@ -1031,7 +1141,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     label: Text(
                       'backup_restore.export_button'.tr(),
                       style: theme.textTheme.labelLarge?.copyWith(
-                        color: const Color(0xFFFFE16D),
+                        color: theme.brightness == Brightness.dark
+                            ? const Color(0xFFFFE16D)
+                            : theme.colorScheme.primaryContainer,
                         fontWeight: FontWeight.bold,
                         fontSize: 12.0,
                         letterSpacing: 0.5,
@@ -1070,7 +1182,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
 
             const SizedBox(height: 32.0),
-            const Divider(color: Colors.white10),
+            Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
             const SizedBox(height: 24.0),
 
             // Gemini API Key Section Header
@@ -1095,30 +1207,52 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               style: theme.textTheme.bodyMedium,
               scrollPadding: const EdgeInsets.only(bottom: 140.0),
               decoration: InputDecoration(
-                // labelText: 'account.gemini_api_key'.tr(),
                 hintText: 'account.gemini_api_key_hint'.tr(),
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                ),
+                hintStyle: theme.inputDecorationTheme.hintStyle,
                 prefixIcon: Icon(
                   Icons.vpn_key_outlined,
                   color: theme.colorScheme.primaryContainer,
-                ),
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.05,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
               onChanged: (val) {
                 _settingsProvider.setGeminiApiKey(val);
               },
             ),
+            const SizedBox(height: 8.0),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _launchGeminiGuide,
+                icon: Icon(
+                  Icons.help_outline_rounded,
+                  size: 16.0,
+                  color: theme.brightness == Brightness.dark
+                      ? const Color(0xFFFFE16D)
+                      : theme.colorScheme.secondary,
+                ),
+                label: Text(
+                  'account.gemini_guide_link'.tr(),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.brightness == Brightness.dark
+                        ? const Color(0xFFFFE16D)
+                        : theme.colorScheme.secondary,
+                    fontWeight: FontWeight.w600,
+                    decoration: TextDecoration.underline,
+                    decorationColor: theme.brightness == Brightness.dark
+                        ? const Color(0xFFFFE16D)
+                        : theme.colorScheme.secondary,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+            ),
 
             const SizedBox(height: 32.0),
-            const Divider(color: Colors.white10),
+            Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
             const SizedBox(height: 24.0),
 
             // Writing Style Section Header
@@ -1160,34 +1294,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               maxLines: null,
               minLines: 4,
               style: theme.textTheme.bodyMedium,
-              cursorColor: const Color(0xFFFFE16D),
+              cursorColor: theme.colorScheme.primaryContainer,
               decoration: InputDecoration(
                 hintText: 'account.writing_style_instruction'.tr(),
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                ),
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.05,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primaryContainer,
-                  ),
-                ),
+                hintStyle: theme.inputDecorationTheme.hintStyle,
               ),
               onChanged: (val) {
                 final langCode = context.locale.languageCode;
@@ -1210,10 +1320,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
             Container(
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainer.withValues(alpha: 0.3),
+                color: theme.colorScheme.surfaceContainer,
                 borderRadius: BorderRadius.circular(12.0),
                 border: Border.all(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
                 ),
               ),
               child: Column(
@@ -1248,12 +1358,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           style: theme.textTheme.bodyMedium?.copyWith(
                             height: 1.5,
                           ),
-                          cursorColor: const Color(0xFFFFE16D),
+                          cursorColor: theme.colorScheme.primaryContainer,
                           decoration: InputDecoration(
                             hintText: 'account.writing_style_sample_hint'.tr(),
-                            hintStyle: TextStyle(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-                            ),
+                            hintStyle: theme.inputDecorationTheme.hintStyle,
                             border: InputBorder.none,
                             contentPadding: EdgeInsets.zero,
                           ),
@@ -1329,6 +1437,60 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               style: TextStyle(
                 fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 color: theme.colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeCard(
+    BuildContext context, {
+    required String label,
+    required ThemeMode mode,
+    required bool isActive,
+    required ThemeData theme,
+    required IconData icon,
+  }) {
+    return InkWell(
+      onTap: () {
+        _settingsProvider.setThemeMode(mode);
+      },
+      borderRadius: BorderRadius.circular(8.0),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
+        decoration: BoxDecoration(
+          color: isActive
+              ? theme.colorScheme.primaryContainer.withValues(alpha: 0.05)
+              : theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.05,
+                ),
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(
+            color: isActive
+                ? theme.colorScheme.primaryContainer
+                : theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
+            width: isActive ? 2.0 : 1.0,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 24.0,
+              color: isActive
+                  ? theme.colorScheme.primaryContainer
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                color: theme.colorScheme.onSurface,
+                fontSize: 12.0,
               ),
             ),
           ],

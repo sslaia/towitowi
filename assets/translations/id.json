@@ -103,7 +103,8 @@
     "social_preview": "PRATINJAU CIUTAN TOWI MEDIA SOSIAL",
     "bookmarked": "Catatan ditandai",
     "unbookmarked": "Tanda buku dihapus",
-    "saved_as_new_note": "Disimpan sebagai catatan baru!"
+    "saved_as_new_note": "Disimpan sebagai catatan baru!",
+    "whole_note": "Catatan utuh"
   },
   "account": {
     "title": "Pengaturan",
@@ -113,9 +114,14 @@
     "select_language": "Pilih Bahasa",
     "english": "Inggris",
     "indonesian": "Indonesia",
+    "theme_mode": "Mode Tema",
+    "theme_mode_system": "Sistem",
+    "theme_mode_light": "Terang",
+    "theme_mode_dark": "Gelap",
     "gemini_key_section": "Kunci API Gemini",
     "gemini_api_key": "Kunci API Gemini",
     "gemini_api_key_hint": "Masukkan Kunci API dari Google AI Studio",
+    "gemini_guide_link": "Butuh bantuan? Lihat Panduan Pengaturan Gemini",
     "writing_style_settings": "Atur Gaya Tulis",
     "writing_style_instruction": "Instruksi Sistem",
     "writing_style_samples": "Artikel Referensi Gaya",
@@ -139,7 +145,7 @@
   },
   "about": {
     "title": "Tentang",
-    "version": "Versi 0.1.0",
+    "version": "Versi 0.1.1",
     "description": "TowiTowi adalah aplikasi pencatat yang terinspirasi oleh burung Towitowi dari Nias (Orthotomus ruficeps baeus). Menurut kepercayaan setempat, kicauan burung Towitowi membawa kabar baik. Kami berharap bahwa menulis dan membagikan catatan Towi Anda membagikan kabar baik bagi Anda dan komunitas Anda. Silakan ber-towi hari ini juga!",
     "view_licenses": "Lihat Lisensi",
     "copyright": "© 2026 io.github.sslaia.towitowi"

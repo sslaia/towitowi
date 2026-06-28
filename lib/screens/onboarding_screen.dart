@@ -172,7 +172,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
 
         return Scaffold(
           body: Container(
-            color: Colors.black, // Dark background
+            color: theme.scaffoldBackgroundColor,
             child: Stack(
               children: [
                 // Diagonal background accent glows
@@ -218,7 +218,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.5),
+                                color: Colors.black.withValues(
+                                  alpha: theme.brightness == Brightness.dark ? 0.5 : 0.1,
+                                ),
                                 blurRadius: 40.0,
                                 spreadRadius: 10.0,
                               ),
@@ -278,7 +280,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                             ),
                           ),
 
-                          const Divider(color: Colors.white10, height: 1.0),
+                          Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2), height: 1.0),
 
                           // Pages Scrollview
                           Expanded(
@@ -299,7 +301,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                           ),
 
                           // Bottom navigation and indicators
-                          const Divider(color: Colors.white10, height: 1.0),
+                          Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2), height: 1.0),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
                             child: Row(
@@ -713,8 +715,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14.0),
               decoration: InputDecoration(
                 hintText: 'onboarding.gemini_key_hint'.tr(),
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                hintStyle: theme.inputDecorationTheme.hintStyle?.copyWith(
                   fontSize: 14.0,
                 ),
                 prefixIcon: Icon(
@@ -722,21 +723,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                   color: theme.colorScheme.primaryContainer,
                   size: 18.0,
                 ),
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primaryContainer,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12.0),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
               ),
               onChanged: _handleGeminiKeyChange,
             ),
@@ -763,23 +750,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
               style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14.0, height: 1.4),
               decoration: InputDecoration(
                 hintText: 'onboarding.sample_hint'.tr(),
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                hintStyle: theme.inputDecorationTheme.hintStyle?.copyWith(
                   fontSize: 14.0,
-                ),
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.05),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.primaryContainer,
-                  ),
                 ),
                 contentPadding: const EdgeInsets.all(16.0),
               ),

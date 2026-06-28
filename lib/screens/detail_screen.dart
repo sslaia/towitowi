@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -17,8 +17,14 @@ import 'edit_screen.dart';
 class DetailScreen extends StatefulWidget {
   final Note note;
   final VoidCallback? onEditPressed; // Null means we are on mobile (nav push)
+  final VoidCallback? onSettingsRedirect;
 
-  const DetailScreen({super.key, required this.note, this.onEditPressed});
+  const DetailScreen({
+    super.key,
+    required this.note,
+    this.onEditPressed,
+    this.onSettingsRedirect,
+  });
 
   @override
   State<DetailScreen> createState() => _DetailScreenState();
@@ -32,16 +38,14 @@ class _DetailScreenState extends State<DetailScreen> {
   String? _blueskySummary;
   String? _mastodonSummary;
   String? _facebookSummary;
-  String? _shareSummary;
 
   // Loading states
   bool _isGeneratingBluesky = false;
   bool _isGeneratingMastodon = false;
   bool _isGeneratingFacebook = false;
-  bool _isGeneratingShare = false;
 
   // Selected tab for the preview card (0: Share, 1: Facebook, 2: Mastodon, 3: Bluesky)
-  int _selectedPreviewTab = 0;
+  int _selectedPreviewTab = 1;
 
 
   @override
@@ -112,23 +116,27 @@ class _DetailScreenState extends State<DetailScreen> {
         SnackBar(
           content: Text('detail.gemini_not_configured'.tr()),
           backgroundColor: Colors.redAccent,
+          action: SnackBarAction(
+            label: 'nav.settings'.tr(),
+            textColor: const Color(0xFFFFE16D),
+            onPressed: () {
+              widget.onSettingsRedirect?.call();
+            },
+          ),
         ),
       );
       return;
     }
 
     setState(() {
-      if (tab == 0) _isGeneratingShare = true;
       if (tab == 1) _isGeneratingFacebook = true;
       if (tab == 2) _isGeneratingMastodon = true;
       if (tab == 3) _isGeneratingBluesky = true;
     });
 
     try {
-      final maxChars = tab == 0
-          ? 200
-          : (tab == 1 ? 300 : (tab == 2 ? 500 : 300));
-      final includeHashtags = tab != 0;
+      final maxChars = tab == 1 ? 300 : (tab == 2 ? 500 : 300);
+      final includeHashtags = true;
 
       final result = await aiService.generateSocialSummary(
         textContent: widget.note.content,
@@ -138,7 +146,6 @@ class _DetailScreenState extends State<DetailScreen> {
       );
 
       setState(() {
-        if (tab == 0) _shareSummary = result;
         if (tab == 1) _facebookSummary = result;
         if (tab == 2) _mastodonSummary = result;
         if (tab == 3) _blueskySummary = result;
@@ -157,7 +164,6 @@ class _DetailScreenState extends State<DetailScreen> {
     } finally {
       if (mounted) {
         setState(() {
-          if (tab == 0) _isGeneratingShare = false;
           if (tab == 1) _isGeneratingFacebook = false;
           if (tab == 2) _isGeneratingMastodon = false;
           if (tab == 3) _isGeneratingBluesky = false;
@@ -246,16 +252,10 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   void _shareSystem() async {
-    if (_shareSummary == null) {
-      await _generatePreview(0);
-    }
-    if (_shareSummary == null) return;
-
     Share.share(
-      _shareSummary!,
+      widget.note.content,
       subject: widget.note.title,
     );
-    _saveSocialPostAsNote('Shared', _shareSummary!);
   }
 
   @override
@@ -326,7 +326,13 @@ class _DetailScreenState extends State<DetailScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => EditScreen(note: widget.note),
+                        builder: (context) => EditScreen(
+                          note: widget.note,
+                          onSettingsRedirect: () {
+                            Navigator.pop(context); // Pop EditScreen
+                            widget.onSettingsRedirect?.call();
+                          },
+                        ),
                       ),
                     );
                   } else {
@@ -462,11 +468,13 @@ class _DetailScreenState extends State<DetailScreen> {
                         ),
                         code: theme.textTheme.bodyMedium?.copyWith(
                           fontFamily: 'monospace',
-                          backgroundColor: Colors.white10,
-                          color: const Color(0xFFFFE16D),
+                          backgroundColor: theme.colorScheme.surfaceContainerHigh,
+                          color: theme.brightness == Brightness.dark
+                              ? const Color(0xFFFFE16D)
+                              : theme.colorScheme.secondary,
                         ),
                         codeblockDecoration: BoxDecoration(
-                          color: Colors.white10,
+                          color: theme.colorScheme.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(4.0),
                         ),
                       ),
@@ -499,9 +507,9 @@ class _DetailScreenState extends State<DetailScreen> {
 
     if (currentTab == 0) {
       title = 'Share';
-      cachedSummary = _shareSummary;
-      isGenerating = _isGeneratingShare;
-      maxChars = 200;
+      cachedSummary = widget.note.content;
+      isGenerating = false;
+      maxChars = widget.note.content.length;
       platformIconPath = 'assets/icon/share-icon.svg';
       accentColor = const Color(0xFFFFE16D);
     } else if (currentTab == 1) {
@@ -530,9 +538,7 @@ class _DetailScreenState extends State<DetailScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.05,
-        ),
+        color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
@@ -573,8 +579,6 @@ class _DetailScreenState extends State<DetailScreen> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildSocialTabButton(0, 'assets/icon/share-icon.svg', theme),
-                  const SizedBox(width: 8.0),
                   _buildSocialTabButton(
                     1,
                     'assets/icon/facebook-icon.svg',
@@ -592,13 +596,15 @@ class _DetailScreenState extends State<DetailScreen> {
                     'assets/icon/bluesky-icon.svg',
                     theme,
                   ),
+                  const SizedBox(width: 8.0),
+                  _buildSocialTabButton(0, 'assets/icon/share-icon.svg', theme),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 16.0),
 
-          const Divider(height: 1, color: Colors.white10),
+          Divider(height: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
 
           // Content Area
           Padding(
@@ -672,10 +678,12 @@ class _DetailScreenState extends State<DetailScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(16.0),
                           decoration: BoxDecoration(
-                            color: Colors.black38,
+                            color: theme.brightness == Brightness.dark
+                                ? Colors.black38
+                                : theme.colorScheme.surface,
                             borderRadius: BorderRadius.circular(12.0),
                             border: Border.all(
-                              color: accentColor.withValues(alpha: 0.2),
+                              color: accentColor.withValues(alpha: 0.3),
                             ),
                           ),
                           child: SelectableText(
@@ -707,7 +715,9 @@ class _DetailScreenState extends State<DetailScreen> {
                             const SizedBox(width: 6.0),
                             Expanded(
                               child: Text(
-                                '$title summary',
+                                currentTab == 0
+                                    ? 'detail.whole_note'.tr()
+                                    : '$title summary',
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurface.withValues(
@@ -719,16 +729,27 @@ class _DetailScreenState extends State<DetailScreen> {
                             const SizedBox(width: 8.0),
 
                             // Character count
-                            Text(
-                              '${cachedSummary.length}/$maxChars',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: cachedSummary.length <= maxChars
-                                    ? Colors.green
-                                    : Colors.redAccent,
+                            if (currentTab != 0) ...[
+                              Text(
+                                '${cachedSummary.length}/$maxChars',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: cachedSummary.length <= maxChars
+                                      ? Colors.green
+                                      : Colors.redAccent,
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 16.0),
+                              const SizedBox(width: 16.0),
+                            ] else ...[
+                              Text(
+                                '${cachedSummary.length}',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                              const SizedBox(width: 16.0),
+                            ],
 
                             // Copy Button
                             IconButton(
@@ -739,23 +760,28 @@ class _DetailScreenState extends State<DetailScreen> {
                                   ClipboardData(text: cachedSummary!),
                                 );
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Copied post to clipboard!'),
-                                    duration: Duration(seconds: 1),
+                                  SnackBar(
+                                    content: Text(
+                                      currentTab == 0
+                                          ? 'Copied whole note to clipboard!'
+                                          : 'Copied post to clipboard!',
+                                    ),
+                                    duration: const Duration(seconds: 1),
                                   ),
                                 );
                               },
                             ),
 
                             // Regenerate Button
-                            IconButton(
-                              icon: const Icon(
-                                Icons.refresh_rounded,
-                                size: 18.0,
+                            if (currentTab != 0)
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.refresh_rounded,
+                                  size: 18.0,
+                                ),
+                                tooltip: 'Regenerate',
+                                onPressed: () => _generatePreview(currentTab),
                               ),
-                              tooltip: 'Regenerate',
-                              onPressed: () => _generatePreview(currentTab),
-                            ),
 
                             // Share Button
                             IconButton(

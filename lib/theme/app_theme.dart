@@ -123,6 +123,199 @@ class AppTheme {
           color: onSurface.withValues(alpha: 0.6),
         ),
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF1F1F1F), // surfaceContainer - less dark
+        hintStyle: const TextStyle(
+          color: Color(0xFFECCB70), // Soft gold hint
+        ),
+        prefixIconColor: primaryContainer,
+        suffixIconColor: primaryContainer,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: const BorderSide(
+            color: outlineVariant,
+            width: 1.0,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: const BorderSide(
+            color: outlineVariant,
+            width: 1.0,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: const BorderSide(
+            color: primaryContainer,
+            width: 1.5,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: const BorderSide(
+            color: error,
+            width: 1.0,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: const BorderSide(
+            color: error,
+            width: 1.5,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
+      ),
+    );
+  }
+
+  static ThemeData get lightTheme {
+    const Color lightScaffoldBg = Color(0xFFFAF8F5); // Alabaster paper
+    const Color lightSurface = Color(0xFFFFFDF9); // Pure ivory
+    const Color lightOnSurface = Color(0xFF2A2825); // Charcoal ink
+    const Color lightPrimary = Color(0xFF705E00); // Deep warm gold/bronze
+    const Color lightOnPrimary = Color(0xFFFFFDF9);
+    const Color lightPrimaryContainer = Color(0xFFE65F00); // Deep orange on buttons instead of golden yellow
+    const Color lightOnPrimaryContainer = Color(0xFFFFFDF9);
+    const Color lightSecondary = Color(0xFFB12704); // Burnt Red Accent
+    const Color lightOnSecondary = Color(0xFFFFFDF9);
+    const Color lightSecondaryContainer = Color(0xFF920703); // Deep Oxblood Red for labels/headers
+    const Color lightOnSecondaryContainer = Color(0xFFC0392B); // Rich red
+    const Color lightOutline = Color(0xFF7E7665);
+    const Color lightOutlineVariant = Color(0xFFD0C5B4);
+    const Color lightSurfaceContainer = Color(0xFFF3ECE0); // Alabaster container
+    const Color lightError = Color(0xFFBA1A1A);
+    const Color lightOnError = Color(0xFFFFFFFF);
+    const Color lightErrorContainer = Color(0xFFFFDAD6);
+    const Color lightOnErrorContainer = Color(0xFF410002);
+
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: lightScaffoldBg,
+      colorScheme: const ColorScheme.light(
+        surface: lightSurface,
+        onSurface: lightOnSurface,
+        primary: lightPrimary,
+        onPrimary: lightOnPrimary,
+        primaryContainer: lightPrimaryContainer,
+        onPrimaryContainer: lightOnPrimaryContainer,
+        secondary: lightSecondary,
+        onSecondary: lightOnSecondary,
+        secondaryContainer: lightSecondaryContainer,
+        onSecondaryContainer: lightOnSecondaryContainer,
+        outline: lightOutline,
+        outlineVariant: lightOutlineVariant,
+        error: lightError,
+        onError: lightOnError,
+        errorContainer: lightErrorContainer,
+        onErrorContainer: lightOnErrorContainer,
+      ),
+      textTheme: TextTheme(
+        // display-lg (EB Garamond)
+        displayLarge: GoogleFonts.ebGaramond(
+          fontSize: 48,
+          fontWeight: FontWeight.w500,
+          height: 56 / 48,
+          letterSpacing: -0.02 * 48,
+          color: lightPrimary,
+        ),
+        // headline-lg (EB Garamond)
+        headlineLarge: GoogleFonts.ebGaramond(
+          fontSize: 32,
+          fontWeight: FontWeight.w500,
+          height: 40 / 32,
+          color: lightOnSurface,
+        ),
+        // headline-md (EB Garamond)
+        headlineMedium: GoogleFonts.ebGaramond(
+          fontSize: 24,
+          fontWeight: FontWeight.w500,
+          height: 32 / 24,
+          color: lightOnSurface,
+        ),
+        // body-lg (Hanken Grotesk)
+        bodyLarge: GoogleFonts.hankenGrotesk(
+          fontSize: 18,
+          fontWeight: FontWeight.w400,
+          height: 28 / 18,
+          color: lightOnSurface,
+        ),
+        // body-md (Hanken Grotesk)
+        bodyMedium: GoogleFonts.hankenGrotesk(
+          fontSize: 16,
+          fontWeight: FontWeight.w400,
+          height: 24 / 16,
+          color: lightOnSurface,
+        ),
+        // label-md (Hanken Grotesk)
+        labelLarge: GoogleFonts.hankenGrotesk(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          height: 20 / 14,
+          letterSpacing: 0.05 * 14,
+          color: lightPrimary,
+        ),
+        // caption (Hanken Grotesk)
+        bodySmall: GoogleFonts.hankenGrotesk(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          height: 16 / 12,
+          color: lightOnSurface.withValues(alpha: 0.6),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: lightSurfaceContainer,
+        hintStyle: const TextStyle(
+          color: Color(0xFFB58900), // Elegant golden yellow/bronze hint
+        ),
+        prefixIconColor: lightPrimary,
+        suffixIconColor: lightPrimary,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: const BorderSide(
+            color: lightOutlineVariant,
+            width: 1.0,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: const BorderSide(
+            color: lightOutlineVariant,
+            width: 1.0,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: const BorderSide(
+            color: lightPrimary,
+            width: 1.5,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: const BorderSide(
+            color: lightError,
+            width: 1.0,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: const BorderSide(
+            color: lightError,
+            width: 1.5,
+          ),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,

@@ -103,7 +103,8 @@
     "social_preview": "SOCIAL MEDIA POST PREVIEW",
     "bookmarked": "Note bookmarked",
     "unbookmarked": "Bookmark removed",
-    "saved_as_new_note": "Saved as a new note!"
+    "saved_as_new_note": "Saved as a new note!",
+    "whole_note": "Whole note"
   },
   "account": {
     "title": "Settings",
@@ -113,9 +114,14 @@
     "select_language": "Select Language",
     "english": "English",
     "indonesian": "Indonesian",
+    "theme_mode": "Theme Mode",
+    "theme_mode_system": "System",
+    "theme_mode_light": "Light",
+    "theme_mode_dark": "Dark",
     "gemini_key_section": "Gemini API Key",
     "gemini_api_key": "Gemini API Key",
     "gemini_api_key_hint": "Enter API Key from Google AI Studio",
+    "gemini_guide_link": "Need help? View the Gemini Setup Guide",
     "writing_style_settings": "Writing Style Settings",
     "writing_style_instruction": "System Instruction",
     "writing_style_samples": "Style Reference Articles",
@@ -139,7 +145,7 @@
   },
   "about": {
     "title": "About",
-    "version": "Version 0.1.0",
+    "version": "Version 0.1.1",
     "description": "TowiTowi is a note-taking application inspired by the Towitowi bird of Nias (Orthotomus ruficeps baeus). According to local lore, when the Towitowi bird chirps, it brings good news. We hope that writing and sharing your Towi notes brings happiness and good news to you and your community.",
     "view_licenses": "View Licenses",
     "copyright": "© 2026 io.github.sslaia.towitowi"

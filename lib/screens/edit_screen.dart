@@ -12,8 +12,15 @@ class EditScreen extends StatefulWidget {
   final Note? note;
   final Function(Note)? onSaved;
   final VoidCallback? onCancel;
+  final VoidCallback? onSettingsRedirect;
 
-  const EditScreen({super.key, this.note, this.onSaved, this.onCancel});
+  const EditScreen({
+    super.key,
+    this.note,
+    this.onSaved,
+    this.onCancel,
+    this.onSettingsRedirect,
+  });
 
   @override
   State<EditScreen> createState() => _EditScreenState();
@@ -166,6 +173,13 @@ class _EditScreenState extends State<EditScreen> {
         SnackBar(
           content: Text('edit.restructure_no_key_error'.tr()),
           backgroundColor: Colors.redAccent,
+          action: SnackBarAction(
+            label: 'nav.settings'.tr(),
+            textColor: const Color(0xFFFFE16D),
+            onPressed: () {
+              widget.onSettingsRedirect?.call();
+            },
+          ),
         ),
       );
       return;
@@ -220,6 +234,13 @@ class _EditScreenState extends State<EditScreen> {
         SnackBar(
           content: Text('edit.restructure_no_key_error'.tr()),
           backgroundColor: Colors.redAccent,
+          action: SnackBarAction(
+            label: 'nav.settings'.tr(),
+            textColor: const Color(0xFFFFE16D),
+            onPressed: () {
+              widget.onSettingsRedirect?.call();
+            },
+          ),
         ),
       );
       return;
@@ -378,218 +399,237 @@ class _EditScreenState extends State<EditScreen> {
               GestureDetector(
                 onTap: () => FocusScope.of(context).unfocus(),
                 child: SafeArea(
-                  child: SingleChildScrollView(
-                    child: Center(
-                      child: Container(
-                        constraints: const BoxConstraints(maxWidth: 800.0),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: layout.margin,
-                          vertical: 48.0,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Title TextField (Transparent and massive display font)
-                            TextField(
-                              controller: _titleController,
-                              focusNode: _titleFocusNode,
-                              autofocus: true,
-                              textCapitalization: TextCapitalization.words,
-                              onTapOutside: (event) {
-                                FocusManager.instance.primaryFocus?.unfocus();
-                              },
-                              style: theme.textTheme.displayLarge?.copyWith(
-                                fontSize: isMobile ? 36.0 : 48.0,
-                                color: theme.colorScheme.onSurface,
-                              ),
-                              cursorColor: const Color(
-                                0xFFFFE16D,
-                              ), // custom gold caret
-                              decoration: InputDecoration(
-                                hintText: 'edit.enter_title'.tr(),
-                                hintStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                ),
-                                border: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                errorBorder: InputBorder.none,
-                                disabledBorder: InputBorder.none,
-                                contentPadding: EdgeInsets.zero,
-                              ),
+                  child: Column(
+                    children: [
+                      // Sticky Formatting Toolbar
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface.withValues(alpha: 0.95),
+                          border: Border(
+                            bottom: BorderSide(
+                              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
+                              width: 1.0,
                             ),
-                            const SizedBox(height: 24.0),
+                          ),
+                        ),
+                        child: Center(
+                          child: Container(
+                            constraints: const BoxConstraints(maxWidth: 800.0),
+                            padding: EdgeInsets.symmetric(horizontal: layout.margin),
+                            child: _buildFormattingToolbar(theme),
+                          ),
+                        ),
+                      ),
 
-                            // Label/Tag input
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.label_outline,
-                                  size: 18.0,
-                                  color: theme.colorScheme.secondaryContainer,
-                                ),
-                                const SizedBox(width: 8.0),
-                                Text(
-                                  '#',
-                                  style: TextStyle(
-                                    color: theme.colorScheme.secondaryContainer,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(width: 4.0),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _labelController,
+                      // Scrollable writing surface
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Center(
+                            child: Container(
+                              constraints: const BoxConstraints(maxWidth: 800.0),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: layout.margin,
+                                vertical: 32.0,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Title TextField (Transparent and massive display font)
+                                  TextField(
+                                    controller: _titleController,
+                                    focusNode: _titleFocusNode,
+                                    autofocus: true,
+                                    textCapitalization: TextCapitalization.words,
                                     onTapOutside: (event) {
-                                      FocusManager.instance.primaryFocus
-                                          ?.unfocus();
+                                      FocusManager.instance.primaryFocus?.unfocus();
                                     },
-                                    style: theme.textTheme.labelLarge?.copyWith(
-                                      color: theme
-                                          .colorScheme
-                                          .onSecondaryContainer,
-                                      fontSize: 14.0,
-                                      letterSpacing: 1.0,
+                                    style: theme.textTheme.displayLarge?.copyWith(
+                                      fontSize: isMobile ? 36.0 : 48.0,
+                                      color: theme.colorScheme.onSurface,
                                     ),
-                                    cursorColor: const Color(0xFFFFE16D),
-                                    textCapitalization:
-                                        TextCapitalization.characters,
+                                    cursorColor: theme.colorScheme.primaryContainer,
                                     decoration: InputDecoration(
-                                      hintText: 'edit.add_label'.tr(),
-                                      hintStyle: TextStyle(
-                                        color: theme.colorScheme.onSurface
-                                            .withValues(alpha: 0.2),
-                                        letterSpacing: 1.0,
+                                      hintText: 'edit.enter_title'.tr(),
+                                      hintStyle: theme.inputDecorationTheme.hintStyle,
+                                      border: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      errorBorder: InputBorder.none,
+                                      disabledBorder: InputBorder.none,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 24.0),
+
+                                  // Label/Tag input
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.label_outline,
+                                        size: 18.0,
+                                        color: theme.colorScheme.secondaryContainer,
                                       ),
+                                      const SizedBox(width: 8.0),
+                                      Text(
+                                        '#',
+                                        style: TextStyle(
+                                          color: theme.colorScheme.secondaryContainer,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4.0),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _labelController,
+                                          onTapOutside: (event) {
+                                            FocusManager.instance.primaryFocus
+                                                ?.unfocus();
+                                          },
+                                          style: theme.textTheme.labelLarge?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSecondaryContainer,
+                                            fontSize: 14.0,
+                                            letterSpacing: 1.0,
+                                          ),
+                                          cursorColor: theme.colorScheme.primaryContainer,
+                                          textCapitalization:
+                                              TextCapitalization.characters,
+                                          decoration: InputDecoration(
+                                            hintText: 'edit.add_label'.tr(),
+                                            hintStyle: theme.inputDecorationTheme.hintStyle?.copyWith(
+                                              letterSpacing: 1.0,
+                                            ),
+                                            border: InputBorder.none,
+                                            contentPadding: EdgeInsets.zero,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 32.0),
+
+                                  // Narrative section header
+                                  Text(
+                                    'edit.narrative'.tr(),
+                                    style: theme.textTheme.labelLarge?.copyWith(
+                                      color: theme.colorScheme.secondaryContainer,
+                                      fontSize: 10.0,
+                                      letterSpacing: 2.0,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16.0),
+
+                                  // Body Content Textarea
+                                  TextField(
+                                    controller: _contentController,
+                                    textCapitalization: TextCapitalization.sentences,
+                                    spellCheckConfiguration:
+                                        const SpellCheckConfiguration(),
+                                    onTapOutside: (event) {
+                                      FocusManager.instance.primaryFocus?.unfocus();
+                                    },
+                                    style: theme.textTheme.bodyLarge?.copyWith(
+                                      height: 1.6,
+                                    ),
+                                    cursorColor: theme.colorScheme.primaryContainer,
+                                    maxLines: null,
+                                    minLines: 15,
+                                    keyboardType: TextInputType.multiline,
+                                    decoration: InputDecoration(
+                                      hintText: 'edit.begin_narrative'.tr(),
+                                      hintStyle: theme.inputDecorationTheme.hintStyle,
                                       border: InputBorder.none,
                                       contentPadding: EdgeInsets.zero,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 32.0),
-
-                            // Narrative section header
-                            Text(
-                              'edit.narrative'.tr(),
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                color: theme.colorScheme.secondaryContainer,
-                                fontSize: 10.0,
-                                letterSpacing: 2.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16.0),
-
-                            // Formatting Toolbar
-                            _buildFormattingToolbar(theme),
-                            const SizedBox(height: 16.0),
-
-                            // Body Content Textarea
-                            TextField(
-                              controller: _contentController,
-                              textCapitalization: TextCapitalization.sentences,
-                              spellCheckConfiguration:
-                                  const SpellCheckConfiguration(),
-                              onTapOutside: (event) {
-                                FocusManager.instance.primaryFocus?.unfocus();
-                              },
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                height: 1.6,
-                              ),
-                              cursorColor: const Color(0xFFFFE16D),
-                              maxLines: null,
-                              minLines: 15,
-                              keyboardType: TextInputType.multiline,
-                              decoration: InputDecoration(
-                                hintText: 'edit.begin_narrative'.tr(),
-                                hintStyle: TextStyle(
-                                  color: theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ),
-                            const SizedBox(height: 32.0),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Wrap(
-                                spacing: 16.0,
-                                runSpacing: 12.0,
-                                alignment: WrapAlignment.end,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: const Color(0xFFFFE16D),
-                                      side: const BorderSide(
-                                        color: Color(0xFFFFE16D),
-                                        width: 1.5,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          4.0,
-                                        ),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20.0,
-                                        vertical: 16.0,
-                                      ),
-                                    ),
-                                    icon: const Icon(
-                                      Icons.auto_awesome,
-                                      size: 18.0,
-                                    ),
-                                    label: Text(
-                                      'edit.gemini'.tr(),
-                                      style: theme.textTheme.labelLarge
-                                          ?.copyWith(
-                                            color: const Color(0xFFFFE16D),
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 1.0,
+                                  const SizedBox(height: 32.0),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Wrap(
+                                      spacing: 16.0,
+                                      runSpacing: 12.0,
+                                      alignment: WrapAlignment.end,
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        OutlinedButton.icon(
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: theme.brightness == Brightness.dark
+                                                ? const Color(0xFFFFE16D)
+                                                : theme.colorScheme.secondary,
+                                            side: BorderSide(
+                                              color: theme.brightness == Brightness.dark
+                                                  ? const Color(0xFFFFE16D)
+                                                  : theme.colorScheme.secondary,
+                                              width: 1.5,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                4.0,
+                                              ),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 20.0,
+                                              vertical: 16.0,
+                                            ),
                                           ),
-                                    ),
-                                    onPressed: _showGeminiRestructureDialog,
-                                  ),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          theme.colorScheme.primaryContainer,
-                                      foregroundColor:
-                                          theme.colorScheme.onPrimaryContainer,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          4.0,
-                                        ),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 32.0,
-                                        vertical: 16.0,
-                                      ),
-                                    ),
-                                    onPressed: _saveNote,
-                                    child: Text(
-                                      'edit.save'.tr(),
-                                      style: theme.textTheme.labelLarge
-                                          ?.copyWith(
-                                            color: theme.colorScheme.onPrimary,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 1.0,
+                                          icon: const Icon(
+                                            Icons.auto_awesome,
+                                            size: 18.0,
                                           ),
+                                          label: Text(
+                                            'edit.gemini'.tr(),
+                                            style: theme.textTheme.labelLarge
+                                                ?.copyWith(
+                                                  color: theme.brightness == Brightness.dark
+                                                      ? const Color(0xFFFFE16D)
+                                                      : theme.colorScheme.secondary,
+                                                  fontWeight: FontWeight.bold,
+                                                  letterSpacing: 1.0,
+                                                ),
+                                          ),
+                                          onPressed: _showGeminiRestructureDialog,
+                                        ),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                theme.colorScheme.primaryContainer,
+                                            foregroundColor:
+                                                theme.colorScheme.onPrimaryContainer,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                4.0,
+                                              ),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 32.0,
+                                              vertical: 16.0,
+                                            ),
+                                          ),
+                                          onPressed: _saveNote,
+                                          child: Text(
+                                            'edit.save'.tr(),
+                                            style: theme.textTheme.labelLarge
+                                                ?.copyWith(
+                                                  color: theme.colorScheme.onPrimary,
+                                                  fontWeight: FontWeight.bold,
+                                                  letterSpacing: 1.0,
+                                                ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
@@ -604,9 +644,7 @@ class _EditScreenState extends State<EditScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.05,
-        ),
+        color: theme.colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(8.0),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
@@ -668,12 +706,14 @@ class _EditScreenState extends State<EditScreen> {
                             ),
                           ),
                         )
-                      : IconButton(
-                          icon: const Icon(Icons.auto_awesome),
-                          tooltip: 'edit.polish_summarize_tooltip'.tr(),
-                          color: const Color(0xFFFFE16D),
-                          onPressed: _polishAndSummarize,
-                        ),
+                        : IconButton(
+                            icon: const Icon(Icons.auto_awesome),
+                            tooltip: 'edit.polish_summarize_tooltip'.tr(),
+                            color: theme.brightness == Brightness.dark
+                                ? const Color(0xFFFFE16D)
+                                : theme.colorScheme.secondary,
+                            onPressed: _polishAndSummarize,
+                          ),
                 ],
               ),
             ),

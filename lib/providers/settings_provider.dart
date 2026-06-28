@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/style_references.dart';
@@ -8,6 +8,7 @@ class SettingsProvider with ChangeNotifier {
   static const String _geminiApiKeyKey = 'secure_gemini_api_key';
   static const String _legacyGeminiApiKeyKey = 'settings_gemini_api_key';
   static const String _onboardingCompletedKey = 'settings_onboarding_completed';
+  static const String _themeModeKey = 'settings_theme_mode';
 
   static const String _writingStyleInstructionEnKey = 'settings_writing_style_instruction_en';
   static const String _writingStyleInstructionIdKey = 'settings_writing_style_instruction_id';
@@ -20,6 +21,7 @@ class SettingsProvider with ChangeNotifier {
   String _geminiApiKey = '';
   bool _initialized = false;
   bool _onboardingCompleted = false;
+  ThemeMode _themeMode = ThemeMode.system;
 
   String _writingStyleInstructionEn = '';
   String _writingStyleInstructionId = '';
@@ -34,6 +36,7 @@ class SettingsProvider with ChangeNotifier {
   Set<String> get bookmarkedIds => _bookmarkedIds;
   String get geminiApiKey => _geminiApiKey;
   bool get isOnboardingCompleted => _onboardingCompleted;
+  ThemeMode get themeMode => _themeMode;
 
   Future<void> _loadPreferences() async {
     try {
@@ -68,6 +71,15 @@ class SettingsProvider with ChangeNotifier {
       
       // Load onboarding status
       _onboardingCompleted = prefs.getBool(_onboardingCompletedKey) ?? false;
+
+      // Load theme mode preference
+      final String? themeModeStr = prefs.getString(_themeModeKey);
+      if (themeModeStr != null) {
+        _themeMode = ThemeMode.values.firstWhere(
+          (e) => e.name == themeModeStr,
+          orElse: () => ThemeMode.system,
+        );
+      }
     } catch (e) {
       debugPrint('Error loading preferences: $e');
     } finally {
@@ -84,6 +96,17 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setBool(_onboardingCompletedKey, true);
     } catch (e) {
       debugPrint('Error saving onboarding preference: $e');
+    }
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_themeModeKey, mode.name);
+    } catch (e) {
+      debugPrint('Error saving theme mode preference: $e');
     }
   }
 
