@@ -135,6 +135,26 @@ class AiContentService {
     return result.trim();
   }
 
+  /// Restructures a note into 3 to 4 sequential slides for an Instagram carousel.
+  /// Each slide is separated by a '---' divider.
+  Future<String> generateInstagramSlides({
+    required String textContent,
+    required String userApiKey,
+  }) async {
+    final apiKey = _resolveApiKey(userApiKey);
+    if (apiKey.isEmpty) {
+      throw Exception('Gemini API key is not configured. Please enter your API key in Account Settings.');
+    }
+
+    final prompt = "Read this text content and restructure it into 3 to 4 punchy, engaging, and sequentially flowing slides for an Instagram carousel post. "
+        "Each slide should contain 1-3 lines of text (under 120 characters total per slide) that represent key takeaways or a story flow from the note. "
+        "Separate each slide's content EXACTLY with a '---' divider on a new line. Do NOT include slide numbers, intro, or outro text.\n\n"
+        "Text content:\n$textContent";
+
+    final result = await _generateWithFallback(prompt, apiKey);
+    return result.trim();
+  }
+
   /// Internal helper to attempt generation using model candidates, falling back sequentially if one fails.
   Future<String> _generateWithFallback(String prompt, String apiKey, {Content? systemInstruction}) async {
     final contents = [Content.text(prompt)];

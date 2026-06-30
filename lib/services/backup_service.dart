@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../models/note.dart';
 import '../providers/notes_provider.dart';
 
@@ -136,7 +137,7 @@ class BackupService {
 
     // Show native save file dialog to let user select save path (e.g. Documents folder)
     final selectedPath = await FilePicker.platform.saveFile(
-      dialogTitle: 'Save Backup Archive',
+      dialogTitle: 'backup_restore.save_backup_dialog_title'.tr(),
       fileName: defaultFileName,
       type: FileType.custom,
       allowedExtensions: ['zip'],
@@ -156,47 +157,64 @@ class BackupService {
   }
 
   /// Picks one or multiple .md or .zip files and imports notes into NotesProvider.
-  /// Returns the count of successfully imported/updated notes.
+  /// Returns the count of successfully imported/updated notes, or -1 if cancelled.
   static Future<int> importNotes(NotesProvider notesProvider) async {
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
       type: FileType.custom,
       allowedExtensions: ['md', 'zip'],
+      withData: true,
     );
 
     if (result == null || result.files.isEmpty) {
-      return 0;
+      return -1;
     }
 
     int importCount = 0;
+    int attemptedCount = 0;
 
     for (final file in result.files) {
-      if (file.path == null) continue;
-
+      attemptedCount++;
       final extension = file.extension?.toLowerCase();
 
-      if (extension == 'zip') {
-        final zipFile = File(file.path!);
-        final bytes = await zipFile.readAsBytes();
-        final archive = ZipDecoder().decodeBytes(bytes);
+      // Retrieve bytes from the picked file
+      Uint8List? bytes = file.bytes;
+      if (bytes == null && file.path != null) {
+        try {
+          bytes = await File(file.path!).readAsBytes();
+        } catch (e) {
+          debugPrint('Error reading file bytes from path: ${file.path}, error: $e');
+        }
+      }
 
-        for (final archiveFile in archive) {
-          if (archiveFile.isFile && archiveFile.name.endsWith('.md')) {
-            try {
-              final contentBytes = archiveFile.content as List<int>;
-              final content = utf8.decode(contentBytes);
-              final note = _parseMarkdownNote(archiveFile.name, content);
-              await _saveImportedNote(notesProvider, note);
-              importCount++;
-            } catch (e) {
-              debugPrint('Error importing file from zip: ${archiveFile.name}, error: $e');
+      if (bytes == null) {
+        debugPrint('File bytes are null for file: ${file.name}');
+        continue;
+      }
+
+      if (extension == 'zip') {
+        try {
+          final archive = ZipDecoder().decodeBytes(bytes);
+
+          for (final archiveFile in archive) {
+            if (archiveFile.isFile && archiveFile.name.endsWith('.md')) {
+              try {
+                final contentBytes = archiveFile.content as List<int>;
+                final content = utf8.decode(contentBytes);
+                final note = _parseMarkdownNote(archiveFile.name, content);
+                await _saveImportedNote(notesProvider, note);
+                importCount++;
+              } catch (e) {
+                debugPrint('Error importing file from zip: ${archiveFile.name}, error: $e');
+              }
             }
           }
+        } catch (e) {
+          debugPrint('Error decoding zip: ${file.name}, error: $e');
         }
       } else if (extension == 'md') {
         try {
-          final mdFile = File(file.path!);
-          final content = await mdFile.readAsString();
+          final content = utf8.decode(bytes);
           final note = _parseMarkdownNote(file.name, content);
           await _saveImportedNote(notesProvider, note);
           importCount++;
@@ -204,6 +222,10 @@ class BackupService {
           debugPrint('Error importing markdown file: ${file.name}, error: $e');
         }
       }
+    }
+
+    if (attemptedCount > 0 && importCount == 0) {
+      throw Exception('no_valid_notes');
     }
 
     return importCount;

@@ -4,9 +4,9 @@ class ResponsiveLayout {
   final BuildContext context;
   ResponsiveLayout(this.context);
 
-  bool get isMobile => MediaQuery.of(context).size.width < 800;
-  bool get isTablet => MediaQuery.of(context).size.width >= 800 && MediaQuery.of(context).size.width < 1200;
-  bool get isDesktop => MediaQuery.of(context).size.width >= 1200;
+  bool get isMobile => MediaQuery.of(context).size.width < 800 || MediaQuery.of(context).size.height < 500;
+  bool get isTablet => MediaQuery.of(context).size.width >= 800 && MediaQuery.of(context).size.width < 1200 && MediaQuery.of(context).size.height >= 500;
+  bool get isDesktop => MediaQuery.of(context).size.width >= 1200 && MediaQuery.of(context).size.height >= 500;
 
   double get margin => isMobile ? 24.0 : 64.0;
   double get maxContainerWidth => 1120.0;

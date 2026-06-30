@@ -47,7 +47,7 @@ class Note {
     final monthName = 'months.${monthsKeys[date.month - 1]}'.tr();
     return 'date_format'.tr(namedArgs: {
       'month': monthName,
-      'day': date.day.toString(),
+      'day': date.day.toString().padLeft(2, '0'),
       'year': date.year.toString(),
     });
   }

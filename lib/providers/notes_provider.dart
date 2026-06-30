@@ -121,7 +121,8 @@ class NotesProvider with ChangeNotifier {
   }
 
   Future<void> addNote(Note note) async {
-    _notes.insert(0, note);
+    _notes.add(note);
+    _notes.sort((a, b) => b.date.compareTo(a.date));
     notifyListeners();
     if (!kIsWeb) {
       await _notesRepository.insert(note);
@@ -132,6 +133,7 @@ class NotesProvider with ChangeNotifier {
     final index = _notes.indexWhere((note) => note.id == updatedNote.id);
     if (index != -1) {
       _notes[index] = updatedNote;
+      _notes.sort((a, b) => b.date.compareTo(a.date));
       notifyListeners();
       if (!kIsWeb) {
         await _notesRepository.update(updatedNote);

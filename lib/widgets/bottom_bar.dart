@@ -53,29 +53,20 @@ class BottomBar extends StatelessWidget {
                             horizontal: 12.0,
                             vertical: 8.0,
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.menu_rounded,
-                                color: theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.6,
-                                ),
-                                size: 24.0,
-                              ),
-                              const SizedBox(height: 4.0),
-                              Text(
-                                'nav.menu'.tr(),
-                                style: theme.textTheme.bodySmall?.copyWith(
+                          child: SizedBox(
+                            height: 44.0,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.menu_rounded,
                                   color: theme.colorScheme.onSurface.withValues(
                                     alpha: 0.6,
                                   ),
-                                  fontSize: 10.0,
-                                  fontWeight: FontWeight.normal,
-                                  letterSpacing: 0.5,
+                                  size: 24.0,
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -91,7 +82,7 @@ class BottomBar extends StatelessWidget {
                 ),
                 // Gap for FAB
                 const SizedBox(width: 80.0),
-                // Right Items: Search & Drafts
+                // Right Items: Search & Bookmarks
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -104,10 +95,10 @@ class BottomBar extends StatelessWidget {
                         theme: theme,
                       ),
                       _buildNavItem(
-                        index: 3,
-                        icon: Icons.edit_note_outlined,
-                        activeIcon: Icons.edit_note,
-                        label: 'nav.drafts'.tr(),
+                        index: 2,
+                        icon: Icons.bookmark_border_rounded,
+                        activeIcon: Icons.bookmark_rounded,
+                        label: 'nav.bookmarks'.tr(),
                         theme: theme,
                       ),
                     ],
@@ -181,21 +172,27 @@ class BottomBar extends StatelessWidget {
       borderRadius: BorderRadius.circular(16.0),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(isActive ? activeIcon : icon, color: color, size: 24.0),
-            const SizedBox(height: 4.0),
-            Text(
-              label.toUpperCase(),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: color,
-                fontSize: 10.0,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
+        child: SizedBox(
+          height: 44.0,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(isActive ? activeIcon : icon, color: color, size: 24.0),
+              if (isActive) ...[
+                const SizedBox(height: 4.0),
+                Text(
+                  label.toUpperCase(),
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: color,
+                    fontSize: 10.0,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

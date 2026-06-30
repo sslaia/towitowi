@@ -31,20 +31,40 @@ class _EditScreenState extends State<EditScreen> {
   late TextEditingController _labelController;
   late TextEditingController _contentController;
   late FocusNode _titleFocusNode;
+  late FocusNode _labelFocusNode;
+  late FocusNode _contentFocusNode;
   bool _isAiLoading = false;
+  bool _isSaved = false;
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.note?.title ?? '');
-    _labelController = TextEditingController(text: widget.note?.label ?? '');
+    _labelController = TextEditingController(text: (widget.note?.label ?? '').toUpperCase());
     _contentController = TextEditingController(
       text: widget.note?.content ?? '',
     );
+    
     _titleFocusNode = FocusNode();
     _titleFocusNode.addListener(() {
       if (!_titleFocusNode.hasFocus) {
         _titleController.text = _toTitleCase(_titleController.text);
+        _titleController.selection = const TextSelection.collapsed(offset: -1);
+      }
+    });
+
+    _labelFocusNode = FocusNode();
+    _labelFocusNode.addListener(() {
+      if (!_labelFocusNode.hasFocus) {
+        _labelController.text = _labelController.text.toUpperCase();
+        _labelController.selection = const TextSelection.collapsed(offset: -1);
+      }
+    });
+
+    _contentFocusNode = FocusNode();
+    _contentFocusNode.addListener(() {
+      if (!_contentFocusNode.hasFocus) {
+        _contentController.selection = const TextSelection.collapsed(offset: -1);
       }
     });
   }
@@ -54,7 +74,7 @@ class _EditScreenState extends State<EditScreen> {
     super.didUpdateWidget(oldWidget);
     if (widget.note?.id != oldWidget.note?.id) {
       _titleController.text = widget.note?.title ?? '';
-      _labelController.text = widget.note?.label ?? '';
+      _labelController.text = (widget.note?.label ?? '').toUpperCase();
       _contentController.text = widget.note?.content ?? '';
     }
   }
@@ -65,6 +85,8 @@ class _EditScreenState extends State<EditScreen> {
     _labelController.dispose();
     _contentController.dispose();
     _titleFocusNode.dispose();
+    _labelFocusNode.dispose();
+    _contentFocusNode.dispose();
     super.dispose();
   }
 
@@ -286,9 +308,68 @@ class _EditScreenState extends State<EditScreen> {
     }
   }
 
+  bool _hasUnsavedChanges() {
+    if (_isSaved) return false;
+
+    final initialTitle = widget.note?.title ?? '';
+    final initialLabel = (widget.note?.label ?? '').toUpperCase();
+    final initialContent = widget.note?.content ?? '';
+
+    final currentTitle = _titleController.text;
+    final currentLabel = _labelController.text.toUpperCase();
+    final currentContent = _contentController.text;
+
+    return currentTitle != initialTitle ||
+        currentLabel != initialLabel ||
+        currentContent != initialContent;
+  }
+
+  Future<bool> _showDiscardDialog() async {
+    final theme = Theme.of(context);
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: theme.colorScheme.surface,
+          title: Text(
+            'edit.discard_confirm_title'.tr(),
+            style: TextStyle(
+              color: theme.colorScheme.primaryContainer,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            'edit.discard_confirm_message'.tr(),
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'edit.cancel'.tr(),
+                style: TextStyle(color: theme.colorScheme.secondaryContainer),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: Text('edit.discard'.tr()),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
+  }
+
   void _saveNote() {
     final title = _toTitleCase(_titleController.text.trim());
-    final label = _labelController.text.trim();
+    final label = _labelController.text.trim().toUpperCase();
     final content = _contentController.text.trim();
 
     if (title.isEmpty) {
@@ -297,6 +378,10 @@ class _EditScreenState extends State<EditScreen> {
       ).showSnackBar(SnackBar(content: Text('edit.enter_title_error'.tr())));
       return;
     }
+
+    setState(() {
+      _isSaved = true;
+    });
 
     final notesProvider = Provider.of<NotesProvider>(context, listen: false);
 
@@ -344,25 +429,58 @@ class _EditScreenState extends State<EditScreen> {
       builder: (context, layout) {
         final isMobile = layout.isMobile;
 
-        return Scaffold(
-          appBar: TopBar(
-            title: widget.note != null
-                ? 'edit.edit_note'.tr()
-                : 'edit.new_note'.tr(),
-            leading: isMobile
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      widget.onCancel?.call();
-                      Navigator.pop(context);
-                    },
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: widget.onCancel,
-                  ),
-            border: true,
-          ),
+        return PopScope(
+          canPop: !_hasUnsavedChanges(),
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop) return;
+            final shouldPop = await _showDiscardDialog();
+            if (shouldPop && context.mounted) {
+              setState(() {
+                _isSaved = true;
+              });
+              widget.onCancel?.call();
+              Navigator.pop(context);
+            }
+          },
+          child: Scaffold(
+            appBar: TopBar(
+              title: widget.note != null
+                  ? 'edit.edit_note'.tr()
+                  : 'edit.new_note'.tr(),
+              leading: isMobile
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () async {
+                        if (_hasUnsavedChanges()) {
+                          final shouldPop = await _showDiscardDialog();
+                          if (shouldPop && context.mounted) {
+                            setState(() {
+                              _isSaved = true;
+                            });
+                            widget.onCancel?.call();
+                            Navigator.pop(context);
+                          }
+                        } else {
+                          widget.onCancel?.call();
+                          Navigator.pop(context);
+                        }
+                      },
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () async {
+                        if (_hasUnsavedChanges()) {
+                          final shouldCancel = await _showDiscardDialog();
+                          if (shouldCancel && context.mounted) {
+                            widget.onCancel?.call();
+                          }
+                        } else {
+                          widget.onCancel?.call();
+                        }
+                      },
+                    ),
+              border: true,
+            ),
           body: Stack(
             children: [
               // Atmospheric Glow Accent Blobs
@@ -483,6 +601,7 @@ class _EditScreenState extends State<EditScreen> {
                                       Expanded(
                                         child: TextField(
                                           controller: _labelController,
+                                          focusNode: _labelFocusNode,
                                           onTapOutside: (event) {
                                             FocusManager.instance.primaryFocus
                                                 ?.unfocus();
@@ -526,6 +645,7 @@ class _EditScreenState extends State<EditScreen> {
                                   // Body Content Textarea
                                   TextField(
                                     controller: _contentController,
+                                    focusNode: _contentFocusNode,
                                     textCapitalization: TextCapitalization.sentences,
                                     spellCheckConfiguration:
                                         const SpellCheckConfiguration(),
@@ -635,77 +755,79 @@ class _EditScreenState extends State<EditScreen> {
               ),
             ],
           ),
+        ), // PopScope
         );
       },
     );
   }
 
   Widget _buildFormattingToolbar(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
+    return TextFieldTapRegion(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Subheading
-                  IconButton(
-                    icon: const Icon(Icons.title),
-                    tooltip: 'edit.heading_tooltip'.tr(),
-                    color: theme.colorScheme.primaryContainer,
-                    onPressed: () => _insertFormatting('### '),
-                  ),
-                  // Bold
-                  IconButton(
-                    icon: const Icon(Icons.format_bold),
-                    tooltip: 'edit.bold_tooltip'.tr(),
-                    color: theme.colorScheme.primaryContainer,
-                    onPressed: () => _insertFormatting('**', '**'),
-                  ),
-                  // Italic
-                  IconButton(
-                    icon: const Icon(Icons.format_italic),
-                    tooltip: 'edit.italic_tooltip'.tr(),
-                    color: theme.colorScheme.primaryContainer,
-                    onPressed: () => _insertFormatting('*', '*'),
-                  ),
-                  // Bullet list
-                  IconButton(
-                    icon: const Icon(Icons.format_list_bulleted),
-                    tooltip: 'edit.list_tooltip'.tr(),
-                    color: theme.colorScheme.primaryContainer,
-                    onPressed: () => _insertFormatting('- '),
-                  ),
-                  // Code Block
-                  IconButton(
-                    icon: const Icon(Icons.code),
-                    tooltip: 'edit.code_tooltip'.tr(),
-                    color: theme.colorScheme.primaryContainer,
-                    onPressed: () => _insertFormatting('\n```\n', '\n```\n'),
-                  ),
-                  // AI Polish Button
-                  _isAiLoading
-                      ? const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 12.0),
-                          child: SizedBox(
-                            width: 20.0,
-                            height: 20.0,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.0,
-                              color: Color(0xFFFFE16D),
+        child: Row(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Subheading
+                    IconButton(
+                      icon: const Icon(Icons.title),
+                      tooltip: 'edit.heading_tooltip'.tr(),
+                      color: theme.colorScheme.primaryContainer,
+                      onPressed: () => _insertFormatting('### '),
+                    ),
+                    // Bold
+                    IconButton(
+                      icon: const Icon(Icons.format_bold),
+                      tooltip: 'edit.bold_tooltip'.tr(),
+                      color: theme.colorScheme.primaryContainer,
+                      onPressed: () => _insertFormatting('**', '**'),
+                    ),
+                    // Italic
+                    IconButton(
+                      icon: const Icon(Icons.format_italic),
+                      tooltip: 'edit.italic_tooltip'.tr(),
+                      color: theme.colorScheme.primaryContainer,
+                      onPressed: () => _insertFormatting('*', '*'),
+                    ),
+                    // Bullet list
+                    IconButton(
+                      icon: const Icon(Icons.format_list_bulleted),
+                      tooltip: 'edit.list_tooltip'.tr(),
+                      color: theme.colorScheme.primaryContainer,
+                      onPressed: () => _insertFormatting('- '),
+                    ),
+                    // Code Block
+                    IconButton(
+                      icon: const Icon(Icons.code),
+                      tooltip: 'edit.code_tooltip'.tr(),
+                      color: theme.colorScheme.primaryContainer,
+                      onPressed: () => _insertFormatting('\n```\n', '\n```\n'),
+                    ),
+                    // AI Polish Button
+                    _isAiLoading
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 12.0),
+                            child: SizedBox(
+                              width: 20.0,
+                              height: 20.0,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.0,
+                                color: Color(0xFFFFE16D),
+                              ),
                             ),
-                          ),
-                        )
+                          )
                         : IconButton(
                             icon: const Icon(Icons.auto_awesome),
                             tooltip: 'edit.polish_summarize_tooltip'.tr(),
@@ -714,19 +836,20 @@ class _EditScreenState extends State<EditScreen> {
                                 : theme.colorScheme.secondary,
                             onPressed: _polishAndSummarize,
                           ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 8.0),
-          // Clear Button
-          IconButton(
-            icon: const Icon(Icons.delete_sweep_outlined),
-            tooltip: 'edit.clear_tooltip'.tr(),
-            color: Colors.redAccent.withValues(alpha: 0.8),
-            onPressed: _confirmClearText,
-          ),
-        ],
+            const SizedBox(width: 8.0),
+            // Clear Button
+            IconButton(
+              icon: const Icon(Icons.delete_sweep_outlined),
+              tooltip: 'edit.clear_tooltip'.tr(),
+              color: Colors.redAccent.withValues(alpha: 0.8),
+              onPressed: _confirmClearText,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -997,7 +1120,7 @@ class _GeminiRestructureSheetState extends State<GeminiRestructureSheet> {
               ),
               const SizedBox(height: 16.0),
               Text(
-                'AI Restructuring Failed',
+                'edit.restructure_failed'.tr(),
                 style: theme.textTheme.headlineMedium?.copyWith(
                   color: theme.colorScheme.error,
                   fontWeight: FontWeight.bold,
@@ -1018,7 +1141,7 @@ class _GeminiRestructureSheetState extends State<GeminiRestructureSheet> {
                   foregroundColor: theme.colorScheme.onPrimaryContainer,
                 ),
                 icon: const Icon(Icons.refresh),
-                label: const Text('Try Again'),
+                label: Text('edit.try_again'.tr()),
                 onPressed: _generateRestructured,
               ),
             ],

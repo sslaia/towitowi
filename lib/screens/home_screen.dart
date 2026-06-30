@@ -28,6 +28,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool _isEditingRightPane = false;
   String _searchQuery = '';
   bool _showAllNotes = false;
+  bool _sortAscending = false;
+  String? _selectedLabelFilter;
 
   late final SettingsProvider _settingsProvider;
   late final TextEditingController _geminiApiKeyController;
@@ -160,6 +162,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final notesProvider = Provider.of<NotesProvider>(context, listen: false);
     try {
       final count = await BackupService.importNotes(notesProvider);
+      if (count == -1) {
+        // User cancelled, do nothing
+        return;
+      }
       if (context.mounted && count > 0) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -170,9 +176,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
     } catch (e) {
       if (context.mounted) {
+        final errorMsg = e.toString().contains('no_valid_notes')
+            ? 'backup_restore.no_notes_imported'.tr()
+            : e.toString();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('backup_restore.import_failed'.tr(args: [e.toString()])),
+            content: Text('backup_restore.import_failed'.tr(args: [errorMsg])),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -181,8 +190,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _navigateToSettings() {
+    FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
-      _currentTab = 4;
+      _currentTab = 3;
       _searchQuery = '';
       _searchController.clear();
       _showAllNotes = false;
@@ -216,14 +226,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     Provider.of<SettingsProvider>(context);
-    return ResponsiveBuilder(
-      builder: (context, layout) {
-        if (layout.isMobile) {
-          return _buildMobileLayout(context, layout);
-        } else {
-          return _buildDesktopLayout(context, layout);
-        }
+    return GestureDetector(
+      onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
       },
+      child: ResponsiveBuilder(
+        builder: (context, layout) {
+          if (layout.isMobile) {
+            return _buildMobileLayout(context, layout);
+          } else {
+            return _buildDesktopLayout(context, layout);
+          }
+        },
+      ),
     );
   }
 
@@ -317,17 +332,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         theme: theme,
                       ),
                       _buildDrawerNavItem(
-                        icon: Icons.edit_note_outlined,
-                        activeIcon: Icons.edit_note,
-                        label: 'nav.drafts'.tr(),
-                        index: 3,
-                        theme: theme,
-                      ),
-                      _buildDrawerNavItem(
                         icon: Icons.settings_outlined,
                         activeIcon: Icons.settings,
                         label: 'nav.settings'.tr(),
-                        index: 4,
+                        index: 3,
                         theme: theme,
                       ),
                       Padding(
@@ -348,7 +356,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ),
       body: SafeArea(
         top: _currentTab != 0 || _searchQuery.isNotEmpty,
-        child: _currentTab == 4
+        child: _currentTab == 3
             ? SingleChildScrollView(
                 child: Column(
                   children: [
@@ -395,6 +403,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       bottomNavigationBar: BottomBar(
         currentIndex: _currentTab,
         onTabSelected: (index) {
+          FocusManager.instance.primaryFocus?.unfocus();
           setState(() {
             _currentTab = index;
             _searchQuery = ''; // reset search
@@ -437,6 +446,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     return InkWell(
       onTap: () {
+        FocusManager.instance.primaryFocus?.unfocus();
         setState(() {
           _currentTab = index;
           _searchQuery = ''; // Reset search
@@ -568,7 +578,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         setState(() {
                           _selectedNoteId = null;
                           _isEditingRightPane = true;
-                          if (_currentTab == 4) {
+                          if (_currentTab == 3) {
                             _currentTab = 0;
                           }
                         });
@@ -592,7 +602,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
           // Detail/Editor Pane
           Expanded(
-            child: _currentTab == 4
+            child: _currentTab == 3
                 ? Scaffold(
                     appBar: TopBar(title: 'account.title'.tr(), border: true),
                     body: SingleChildScrollView(
@@ -614,12 +624,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ? EditScreen(
                           note: selectedNote,
                           onSaved: (savedNote) {
+                            FocusManager.instance.primaryFocus?.unfocus();
                             setState(() {
                               _selectedNoteId = savedNote.id;
                               _isEditingRightPane = false;
                             });
                           },
                           onCancel: () {
+                            FocusManager.instance.primaryFocus?.unfocus();
                             setState(() {
                               _isEditingRightPane = false;
                             });
@@ -651,10 +663,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       filtered = allNotes
           .where((n) => _settingsProvider.isBookmarked(n.id))
           .toList();
-    } else if (_currentTab == 3) {
-      filtered = allNotes
-          .where((n) => n.label.toLowerCase() == 'poetry')
-          .toList(); // Mock drafts folder as Poetry
     }
 
     // Filter by Search Query
@@ -667,6 +675,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 n.label.toLowerCase().contains(_searchQuery.toLowerCase()),
           )
           .toList();
+    }
+
+    // Apply Library Filters & Sorting (Only when on Library tab)
+    if (_currentTab == 0) {
+      if (_selectedLabelFilter != null && _selectedLabelFilter!.isNotEmpty) {
+        filtered = filtered
+            .where((n) =>
+                n.label.toLowerCase() == _selectedLabelFilter!.toLowerCase())
+            .toList();
+      }
+
+      final List<Note> sortableList = List.from(filtered);
+      if (_sortAscending) {
+        sortableList.sort((a, b) => a.date.compareTo(b.date)); // oldest first
+      } else {
+        sortableList.sort((a, b) => b.date.compareTo(a.date)); // newest first
+      }
+      filtered = sortableList;
     }
 
     return filtered;
@@ -773,7 +799,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       );
     }
 
-    if (notes.isEmpty) {
+    if (notes.isEmpty && _currentTab != 0) {
       return Center(
         child: Text(
           _currentTab == 2 ? 'home.no_bookmarks'.tr() : 'home.no_notes'.tr(),
@@ -791,12 +817,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         notes.length > 5;
     final List<Note> notesToShow = shouldLimit ? notes.take(5).toList() : notes;
     final bool showViewLibraryButton = shouldLimit;
+    final int listLength = notesToShow.isEmpty
+        ? 2
+        : notesToShow.length + 1 + (showViewLibraryButton ? 1 : 0);
 
     return ListView.builder(
       shrinkWrap: shrinkWrap,
       physics: physics,
       padding: EdgeInsets.symmetric(horizontal: layout.margin, vertical: 16.0),
-      itemCount: notesToShow.length + 1 + (showViewLibraryButton ? 1 : 0),
+      itemCount: listLength,
       itemBuilder: (context, index) {
         if (index == 0) {
           // List Title/Header
@@ -804,13 +833,179 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           if (_currentTab == 2) {
             headerText = 'home.bookmarked_notes'.tr();
           }
+
+          if (_currentTab != 0) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Text(
+                headerText,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          }
+
+          // Fetch unique labels dynamically from all notes (formatted to uppercase to prevent duplicates)
+          final uniqueLabels = notesProvider.notes
+              .map((n) => n.label.trim().toUpperCase())
+              .where((l) => l.isNotEmpty)
+              .toSet()
+              .toList();
+
           return Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: Text(
-              headerText,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontSize: 20.0,
-                fontWeight: FontWeight.bold,
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      headerText,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontSize: 20.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        // Sort Button
+                        PopupMenuButton<bool>(
+                          icon: Icon(
+                            _sortAscending
+                                ? Icons.arrow_upward_rounded
+                                : Icons.arrow_downward_rounded,
+                            color: theme.colorScheme.primaryContainer,
+                            size: 20.0,
+                          ),
+                          tooltip: 'filter.sort_date'.tr(),
+                          onSelected: (bool val) {
+                            setState(() {
+                              _sortAscending = val;
+                            });
+                          },
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              value: false,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.arrow_downward_rounded,
+                                    size: 18,
+                                    color: !_sortAscending
+                                        ? theme.colorScheme.primaryContainer
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text('filter.newest_first'.tr()),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem(
+                              value: true,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.arrow_upward_rounded,
+                                    size: 18,
+                                    color: _sortAscending
+                                        ? theme.colorScheme.primaryContainer
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text('filter.oldest_first'.tr()),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        // Label Filter Button
+                        PopupMenuButton<String?>(
+                          icon: Icon(
+                            _selectedLabelFilter == null
+                                ? Icons.label_outline_rounded
+                                : Icons.label_rounded,
+                            color: theme.colorScheme.primaryContainer,
+                            size: 20.0,
+                          ),
+                          tooltip: 'filter.filter_label'.tr(),
+                          onSelected: (String? val) {
+                            setState(() {
+                              _selectedLabelFilter = val;
+                            });
+                          },
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              value: null,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.clear_all_rounded,
+                                    size: 18,
+                                    color: _selectedLabelFilter == null
+                                        ? theme.colorScheme.primaryContainer
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text('filter.all_labels'.tr()),
+                                ],
+                              ),
+                            ),
+                            ...uniqueLabels.map(
+                              (label) => PopupMenuItem(
+                                value: label,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.label_rounded,
+                                      size: 18,
+                                      color: _selectedLabelFilter == label
+                                          ? theme.colorScheme.primaryContainer
+                                          : null,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(label),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                if (_selectedLabelFilter != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
+                    child: InputChip(
+                      label: Text('# ${_selectedLabelFilter!.toUpperCase()}'),
+                      onDeleted: () {
+                        setState(() {
+                          _selectedLabelFilter = null;
+                        });
+                      },
+                      deleteIconColor: theme.colorScheme.error,
+                      backgroundColor: theme.colorScheme.primaryContainer
+                          .withValues(alpha: 0.1),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }
+
+        if (notesToShow.isEmpty && index == 1) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40.0),
+            child: Center(
+              child: Text(
+                'home.no_notes'.tr(),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
               ),
             ),
           );
@@ -861,6 +1056,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           note: note,
           isSelected: isSelected,
           onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
             if (isMobile) {
               // Mobile Page Push
               Navigator.push(
@@ -880,7 +1076,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               setState(() {
                 _selectedNoteId = note.id;
                 _isEditingRightPane = false;
-                if (_currentTab == 4) {
+                if (_currentTab == 3) {
                   _currentTab = 0;
                 }
               });
@@ -906,6 +1102,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   alpha: 0.2,
                 ),
                 onDestinationSelected: (index) {
+                  FocusManager.instance.primaryFocus?.unfocus();
                   setState(() {
                     _currentTab = index;
                     _searchQuery = '';
@@ -951,14 +1148,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     selectedIcon: const Icon(Icons.bookmark_rounded),
                     label: Text(
                       'nav.bookmarks'.tr(),
-                      style: const TextStyle(fontSize: 10.0),
-                    ),
-                  ),
-                  NavigationRailDestination(
-                    icon: const Icon(Icons.edit_note_outlined),
-                    selectedIcon: const Icon(Icons.edit_note),
-                    label: Text(
-                      'nav.drafts'.tr(),
                       style: const TextStyle(fontSize: 10.0),
                     ),
                   ),
