@@ -17,7 +17,7 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> with TickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  final int _numPages = 4;
+  final int _numPages = 3;
 
   // Controllers for API key and sample text
   late final TextEditingController _apiKeyController;
@@ -104,23 +104,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
     setState(() {
       _sampleController.text = samples.isNotEmpty ? samples.first : '';
     });
-  }
-
-  void _handleGeminiKeyChange(String key) {
-    final settings = Provider.of<SettingsProvider>(context, listen: false);
-    settings.setGeminiApiKey(key);
-  }
-
-  void _handleSampleChange(String text) {
-    final settings = Provider.of<SettingsProvider>(context, listen: false);
-    final langCode = context.locale.languageCode;
-    final currentSamples = List<String>.from(settings.getWritingStyleSamples(langCode));
-    if (currentSamples.isEmpty) {
-      currentSamples.add(text);
-    } else {
-      currentSamples[0] = text;
-    }
-    settings.setWritingStyleSamples(langCode, currentSamples);
   }
 
   void _completeOnboarding() {
@@ -294,7 +277,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
                               children: [
                                 _buildIntroPage(theme, layout),
                                 _buildGeminiPage(theme),
-                                _buildCustomizePage(theme, layout),
                                 _buildLorePage(theme, layout),
                               ],
                             ),
@@ -661,104 +643,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with TickerProvider
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // --- SLIDE 3: CUSTOMIZE / KEY & SAMPLES ---
-  Widget _buildCustomizePage(ThemeData theme, ResponsiveLayout layout) {
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-        child: Column(
-          children: [
-            const SizedBox(height: 8.0),
-            Text(
-              'onboarding.customize_title'.tr(),
-              style: theme.textTheme.displayLarge?.copyWith(
-                fontSize: 26.0,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12.0),
-            Text(
-              'onboarding.customize_desc'.tr(),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
-                height: 1.5,
-                fontSize: 14.0,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24.0),
-
-            // API Key Input
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'account.gemini_key_section'.tr().toUpperCase(),
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.secondaryContainer,
-                  letterSpacing: 1.0,
-                  fontSize: 11.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 10.0),
-            TextField(
-              controller: _apiKeyController,
-              obscureText: true,
-              style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14.0),
-              decoration: InputDecoration(
-                hintText: 'onboarding.gemini_key_hint'.tr(),
-                hintStyle: theme.inputDecorationTheme.hintStyle?.copyWith(
-                  fontSize: 14.0,
-                ),
-                prefixIcon: Icon(
-                  Icons.vpn_key_outlined,
-                  color: theme.colorScheme.primaryContainer,
-                  size: 18.0,
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
-              ),
-              onChanged: _handleGeminiKeyChange,
-            ),
-
-            const SizedBox(height: 24.0),
-
-            // Writing style sample article
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'account.writing_style_samples'.tr().toUpperCase(),
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.secondaryContainer,
-                  letterSpacing: 1.0,
-                  fontSize: 11.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 10.0),
-            TextField(
-              controller: _sampleController,
-              maxLines: 5,
-              style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14.0, height: 1.4),
-              decoration: InputDecoration(
-                hintText: 'onboarding.sample_hint'.tr(),
-                hintStyle: theme.inputDecorationTheme.hintStyle?.copyWith(
-                  fontSize: 14.0,
-                ),
-                contentPadding: const EdgeInsets.all(16.0),
-              ),
-              onChanged: _handleSampleChange,
-            ),
-          ],
-        ),
       ),
     );
   }

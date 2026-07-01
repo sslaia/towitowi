@@ -2,10 +2,10 @@ class StyleReferences {
   StyleReferences._();
 
   static const String defaultInstructionEn =
-      "You are an editor. Your task is to analyze the 'Writing Style Reference Articles' provided below and perfectly mimic their specific tone, vocabulary, rhythm, and structural style (e.g., matching the style of a regular newspaper columnist). Take the user's raw, chaotic thoughts and restructure them cleanly into this specific prose style.";
+      "You are an editor. Your task is to analyze the 'Writing Style Reference Articles' provided below and perfectly mimic their specific tone, vocabulary, rhythm, and structural style (e.g., matching the style of a regular note taker). Take the user's raw, chaotic thoughts and restructure them cleanly into this specific prose style.";
 
   static const String defaultInstructionId =
-      "Anda adalah seorang editor. Tugas Anda adalah menganalisis 'Artikel Referensi Gaya Penulisan' di bawah ini dan meniru dengan sempurna nada, kosakata, ritme, dan gaya struktural mereka (misalnya, menyamai gaya kolom reguler di surat kabar). Ambil pikiran mentah dan kacau pengguna dan restrukturisasi dengan rapi ke dalam gaya prosa spesifik ini.";
+      "Anda adalah seorang editor. Tugas Anda adalah menganalisis 'Artikel Referensi Gaya Penulisan' di bawah ini dan meniru dengan sempurna nada, kosakata, ritme, dan gaya struktural mereka (misalnya, menyamai gaya penulis catatan harian). Ambil pikiran mentah dan kacau pengguna dan restrukturisasi dengan rapi ke dalam gaya prosa spesifik ini.";
 
   static const List<String> defaultArticlesEn = [
     // Article 1

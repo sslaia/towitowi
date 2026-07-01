@@ -7,6 +7,7 @@ import '../providers/settings_provider.dart';
 import '../services/ai_content_service.dart';
 import '../widgets/responsive_builder.dart';
 import '../widgets/top_bar.dart';
+import '../widgets/gemini_setup_dialog.dart';
 
 class EditScreen extends StatefulWidget {
   final Note? note;
@@ -65,6 +66,15 @@ class _EditScreenState extends State<EditScreen> {
     _contentFocusNode.addListener(() {
       if (!_contentFocusNode.hasFocus) {
         _contentController.selection = const TextSelection.collapsed(offset: -1);
+      }
+    });
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.note == null) {
+        final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+        if (settingsProvider.shouldShowGeminiSetupAlert) {
+          showGeminiSetupDialog(context);
+        }
       }
     });
   }
@@ -424,6 +434,9 @@ class _EditScreenState extends State<EditScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+    final aiService = Provider.of<AiContentService>(context, listen: false);
+    final hasAiKey = aiService.hasAnyConfiguredKey(settingsProvider.geminiApiKey);
 
     return ResponsiveBuilder(
       builder: (context, layout) {
@@ -536,7 +549,7 @@ class _EditScreenState extends State<EditScreen> {
                           child: Container(
                             constraints: const BoxConstraints(maxWidth: 800.0),
                             padding: EdgeInsets.symmetric(horizontal: layout.margin),
-                            child: _buildFormattingToolbar(theme),
+                            child: _buildFormattingToolbar(theme, hasAiKey),
                           ),
                         ),
                       ),
@@ -558,6 +571,7 @@ class _EditScreenState extends State<EditScreen> {
                                   TextField(
                                     controller: _titleController,
                                     focusNode: _titleFocusNode,
+                                    selectAllOnFocus: false,
                                     autofocus: true,
                                     textCapitalization: TextCapitalization.words,
                                     onTapOutside: (event) {
@@ -602,6 +616,7 @@ class _EditScreenState extends State<EditScreen> {
                                         child: TextField(
                                           controller: _labelController,
                                           focusNode: _labelFocusNode,
+                                          selectAllOnFocus: false,
                                           onTapOutside: (event) {
                                             FocusManager.instance.primaryFocus
                                                 ?.unfocus();
@@ -646,6 +661,7 @@ class _EditScreenState extends State<EditScreen> {
                                   TextField(
                                     controller: _contentController,
                                     focusNode: _contentFocusNode,
+                                    selectAllOnFocus: false,
                                     textCapitalization: TextCapitalization.sentences,
                                     spellCheckConfiguration:
                                         const SpellCheckConfiguration(),
@@ -675,44 +691,45 @@ class _EditScreenState extends State<EditScreen> {
                                       alignment: WrapAlignment.end,
                                       crossAxisAlignment: WrapCrossAlignment.center,
                                       children: [
-                                        OutlinedButton.icon(
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor: theme.brightness == Brightness.dark
-                                                ? const Color(0xFFFFE16D)
-                                                : theme.colorScheme.secondary,
-                                            side: BorderSide(
-                                              color: theme.brightness == Brightness.dark
+                                        if (hasAiKey)
+                                          OutlinedButton.icon(
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: theme.brightness == Brightness.dark
                                                   ? const Color(0xFFFFE16D)
                                                   : theme.colorScheme.secondary,
-                                              width: 1.5,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(
-                                                4.0,
+                                              side: BorderSide(
+                                                color: theme.brightness == Brightness.dark
+                                                    ? const Color(0xFFFFE16D)
+                                                    : theme.colorScheme.secondary,
+                                                width: 1.5,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(
+                                                  4.0,
+                                                ),
+                                              ),
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 20.0,
+                                                vertical: 16.0,
                                               ),
                                             ),
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 20.0,
-                                              vertical: 16.0,
+                                            icon: const Icon(
+                                              Icons.auto_awesome,
+                                              size: 18.0,
                                             ),
+                                            label: Text(
+                                              'edit.gemini'.tr(),
+                                              style: theme.textTheme.labelLarge
+                                                  ?.copyWith(
+                                                    color: theme.brightness == Brightness.dark
+                                                        ? const Color(0xFFFFE16D)
+                                                        : theme.colorScheme.secondary,
+                                                    fontWeight: FontWeight.bold,
+                                                    letterSpacing: 1.0,
+                                                  ),
+                                            ),
+                                            onPressed: _showGeminiRestructureDialog,
                                           ),
-                                          icon: const Icon(
-                                            Icons.auto_awesome,
-                                            size: 18.0,
-                                          ),
-                                          label: Text(
-                                            'edit.gemini'.tr(),
-                                            style: theme.textTheme.labelLarge
-                                                ?.copyWith(
-                                                  color: theme.brightness == Brightness.dark
-                                                      ? const Color(0xFFFFE16D)
-                                                      : theme.colorScheme.secondary,
-                                                  fontWeight: FontWeight.bold,
-                                                  letterSpacing: 1.0,
-                                                ),
-                                          ),
-                                          onPressed: _showGeminiRestructureDialog,
-                                        ),
                                         ElevatedButton(
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor:
@@ -761,7 +778,7 @@ class _EditScreenState extends State<EditScreen> {
     );
   }
 
-  Widget _buildFormattingToolbar(ThemeData theme) {
+  Widget _buildFormattingToolbar(ThemeData theme, bool hasAiKey) {
     return TextFieldTapRegion(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
@@ -808,6 +825,20 @@ class _EditScreenState extends State<EditScreen> {
                       color: theme.colorScheme.primaryContainer,
                       onPressed: () => _insertFormatting('- '),
                     ),
+                    // Numbered List
+                    IconButton(
+                      icon: const Icon(Icons.format_list_numbered),
+                      tooltip: 'edit.numbered_list_tooltip'.tr(),
+                      color: theme.colorScheme.primaryContainer,
+                      onPressed: () => _insertFormatting('1. '),
+                    ),
+                    // Todo Checklist
+                    IconButton(
+                      icon: const Icon(Icons.check_box_outlined),
+                      tooltip: 'edit.todo_tooltip'.tr(),
+                      color: theme.colorScheme.primaryContainer,
+                      onPressed: () => _insertFormatting('- [ ] '),
+                    ),
                     // Code Block
                     IconButton(
                       icon: const Icon(Icons.code),
@@ -816,26 +847,28 @@ class _EditScreenState extends State<EditScreen> {
                       onPressed: () => _insertFormatting('\n```\n', '\n```\n'),
                     ),
                     // AI Polish Button
-                    _isAiLoading
-                        ? const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 12.0),
-                            child: SizedBox(
-                              width: 20.0,
-                              height: 20.0,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.0,
-                                color: Color(0xFFFFE16D),
+                    if (hasAiKey) ...[
+                      _isAiLoading
+                          ? const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 12.0),
+                              child: SizedBox(
+                                width: 20.0,
+                                height: 20.0,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.0,
+                                  color: Color(0xFFFFE16D),
+                                ),
                               ),
+                            )
+                          : IconButton(
+                              icon: const Icon(Icons.auto_awesome),
+                              tooltip: 'edit.polish_summarize_tooltip'.tr(),
+                              color: theme.brightness == Brightness.dark
+                                  ? const Color(0xFFFFE16D)
+                                  : theme.colorScheme.secondary,
+                              onPressed: _polishAndSummarize,
                             ),
-                          )
-                        : IconButton(
-                            icon: const Icon(Icons.auto_awesome),
-                            tooltip: 'edit.polish_summarize_tooltip'.tr(),
-                            color: theme.brightness == Brightness.dark
-                                ? const Color(0xFFFFE16D)
-                                : theme.colorScheme.secondary,
-                            onPressed: _polishAndSummarize,
-                          ),
+                    ],
                   ],
                 ),
               ),

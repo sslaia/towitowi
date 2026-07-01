@@ -11,8 +11,9 @@ import '../widgets/note_list_item.dart';
 import 'detail_screen.dart';
 import 'edit_screen.dart';
 import 'about_screen.dart';
+import 'guide_screen.dart';
 import '../services/backup_service.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -199,28 +200,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
   }
 
-  Future<void> _launchGeminiGuide() async {
-    final langCode = context.locale.languageCode;
-    final urlString = langCode == 'id'
-        ? 'https://sslaia.github.io/towitowi/guide-id.html'
-        : 'https://sslaia.github.io/towitowi/guide-en.html';
-    final url = Uri.parse(urlString);
-    try {
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url, mode: LaunchMode.externalApplication);
-      } else {
-        throw 'Could not launch $urlString';
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to open guide: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    }
+  void _launchGeminiGuide() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const GuideScreen(),
+      ),
+    );
   }
 
   @override
@@ -756,6 +742,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       child: TextField(
         controller: _searchController,
         focusNode: _searchFocusNode,
+        selectAllOnFocus: false,
         onChanged: (val) => setState(() => _searchQuery = val),
         style: theme.textTheme.bodyMedium,
         decoration: InputDecoration(
@@ -1387,12 +1374,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            const SizedBox(height: 20.0),
+            const SizedBox(height: 8.0),
+            Text(
+              'account.gemini_api_intro'.tr(),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16.0),
 
             // Gemini API Key input
             TextField(
               controller: _geminiApiKeyController,
               obscureText: true,
+              selectAllOnFocus: false,
               style: theme.textTheme.bodyMedium,
               scrollPadding: const EdgeInsets.only(bottom: 140.0),
               decoration: InputDecoration(
@@ -1481,6 +1477,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             TextField(
               controller: _writingStyleInstructionController,
               maxLines: null,
+              selectAllOnFocus: false,
               minLines: 4,
               style: theme.textTheme.bodyMedium,
               cursorColor: theme.colorScheme.primaryContainer,
@@ -1542,6 +1539,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         return TextField(
                           controller: _writingStyleSampleControllers[index],
                           maxLines: null,
+                          selectAllOnFocus: false,
                           expands: true,
                           textAlignVertical: TextAlignVertical.top,
                           style: theme.textTheme.bodyMedium?.copyWith(

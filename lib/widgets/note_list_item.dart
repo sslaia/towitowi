@@ -100,7 +100,9 @@ class _NoteListItemState extends State<NoteListItem> {
                     const SizedBox(height: 6.0),
                     // Snippet description
                     Text(
-                      widget.note.content,
+                      widget.note.plainTextSnippet.isEmpty
+                          ? '(Empty Note)'
+                          : widget.note.plainTextSnippet,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodyMedium?.copyWith(

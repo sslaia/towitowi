@@ -15,6 +15,46 @@ class Note {
     required this.date,
   });
 
+  // Get a clean plain-text snippet of the content without Markdown syntax
+  String get plainTextSnippet {
+    if (content.trim().isEmpty) return '';
+
+    String cleaned = content;
+
+    // 1. Remove Code blocks
+    cleaned = cleaned.replaceAll(RegExp(r'```[\s\S]*?```'), '');
+
+    // 2. Remove HTML tags (if any)
+    cleaned = cleaned.replaceAll(RegExp(r'<[^>]*>'), '');
+
+    // 3. Remove markdown headers (e.g. # Heading)
+    cleaned = cleaned.replaceAll(RegExp(r'^#+\s+', multiLine: true), '');
+
+    // 4. Remove blockquotes (e.g. > Quote)
+    cleaned = cleaned.replaceAll(RegExp(r'^>\s+', multiLine: true), '');
+
+    // 5. Remove task lists / checkboxes (e.g. - [ ] task)
+    cleaned = cleaned.replaceAll(RegExp(r'^-\s+\[[ xX]\]\s+', multiLine: true), '');
+
+    // 6. Remove list bullets (e.g. - list item, 1. list item)
+    cleaned = cleaned.replaceAll(RegExp(r'^[-*+]\s+', multiLine: true), '');
+    cleaned = cleaned.replaceAll(RegExp(r'^\d+\.\s+', multiLine: true), '');
+
+    // 7. Remove bold / italic markers
+    cleaned = cleaned.replaceAll(RegExp(r'\*\*|__|\*|_|`'), '');
+
+    // 8. Simplify links [text](url) -> text
+    cleaned = cleaned.replaceAllMapped(RegExp(r'\[([^\]]+)\]\([^)]+\)'), (match) => match.group(1) ?? '');
+
+    // 9. Remove image links ![alt](url) -> ''
+    cleaned = cleaned.replaceAll(RegExp(r'!\[[^\]]*\]\([^)]+\)'), '');
+
+    // 10. Collapse multiple whitespaces and newlines
+    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
+
+    return cleaned;
+  }
+
   // Calculate word count dynamically
   int get wordCount {
     if (content.trim().isEmpty) return 0;

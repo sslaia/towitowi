@@ -9,6 +9,8 @@ class SettingsProvider with ChangeNotifier {
   static const String _legacyGeminiApiKeyKey = 'settings_gemini_api_key';
   static const String _onboardingCompletedKey = 'settings_onboarding_completed';
   static const String _themeModeKey = 'settings_theme_mode';
+  static const String _showGeminiSetupAlertKey = 'settings_show_gemini_setup_alert';
+  static const String _geminiSetupAlertNextShowTimeKey = 'settings_gemini_setup_alert_next_show_time';
 
   static const String _writingStyleInstructionEnKey = 'settings_writing_style_instruction_en';
   static const String _writingStyleInstructionIdKey = 'settings_writing_style_instruction_id';
@@ -22,6 +24,8 @@ class SettingsProvider with ChangeNotifier {
   bool _initialized = false;
   bool _onboardingCompleted = false;
   ThemeMode _themeMode = ThemeMode.system;
+  bool _showGeminiSetupAlert = true;
+  int _geminiSetupAlertNextShowTime = 0;
 
   String _writingStyleInstructionEn = '';
   String _writingStyleInstructionId = '';
@@ -37,6 +41,15 @@ class SettingsProvider with ChangeNotifier {
   String get geminiApiKey => _geminiApiKey;
   bool get isOnboardingCompleted => _onboardingCompleted;
   ThemeMode get themeMode => _themeMode;
+  bool get showGeminiSetupAlert => _showGeminiSetupAlert;
+  int get geminiSetupAlertNextShowTime => _geminiSetupAlertNextShowTime;
+
+  bool get shouldShowGeminiSetupAlert {
+    if (!_showGeminiSetupAlert) return false;
+    if (_geminiApiKey.trim().isNotEmpty) return false;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return now >= _geminiSetupAlertNextShowTime;
+  }
 
   Future<void> _loadPreferences() async {
     try {
@@ -80,6 +93,8 @@ class SettingsProvider with ChangeNotifier {
           orElse: () => ThemeMode.system,
         );
       }
+      _showGeminiSetupAlert = prefs.getBool(_showGeminiSetupAlertKey) ?? true;
+      _geminiSetupAlertNextShowTime = prefs.getInt(_geminiSetupAlertNextShowTimeKey) ?? 0;
     } catch (e) {
       debugPrint('Error loading preferences: $e');
     } finally {
@@ -207,6 +222,29 @@ class SettingsProvider with ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error saving writing style samples: $e');
+    }
+  }
+
+  Future<void> disableGeminiSetupAlertForever() async {
+    _showGeminiSetupAlert = false;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_showGeminiSetupAlertKey, false);
+    } catch (e) {
+      debugPrint('Error saving disable Gemini alert preference: $e');
+    }
+  }
+
+  Future<void> snoozeGeminiSetupAlert(int days) async {
+    final nextTime = DateTime.now().add(Duration(days: days)).millisecondsSinceEpoch;
+    _geminiSetupAlertNextShowTime = nextTime;
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_geminiSetupAlertNextShowTimeKey, nextTime);
+    } catch (e) {
+      debugPrint('Error saving snooze Gemini alert preference: $e');
     }
   }
 }

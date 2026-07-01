@@ -75,6 +75,8 @@
     "italic_tooltip": "Italic",
     "heading_tooltip": "Subheading",
     "list_tooltip": "Bullet List",
+    "todo_tooltip": "Checklist / Todo",
+    "numbered_list_tooltip": "Numbered List",
     "code_tooltip": "Code Block",
     "restructure_dialog_title": "Gemini Restructure",
     "restructure_refresh_tooltip": "Generate another version",
@@ -135,6 +137,8 @@
     "background_style": "Background Style",
     "font_style": "Font Style",
     "font_size": "Font Size",
+    "text_align": "Horizontal Alignment",
+    "vertical_position": "Vertical Position",
     "share_options_title": "Choose Share Format",
     "share_as_text": "Share as Text",
     "share_as_image": "Share as Image",
@@ -181,6 +185,7 @@
     "gemini_api_key": "Gemini API Key",
     "gemini_api_key_hint": "Enter API Key from Google AI Studio",
     "gemini_guide_link": "Need help? View the Gemini Setup Guide",
+    "gemini_api_intro": "Do you want a little help in restructuring your note or crafting your social media posts? Provide the API key below and adjust the system instruction as well as the style references.",
     "writing_style_settings": "Writing Style Settings",
     "writing_style_instruction": "System Instruction",
     "writing_style_samples": "Style Reference Articles",
@@ -189,7 +194,8 @@
     "writing_style_desc": "Configure the Gemini restructuring prompt and reference articles to emulate your targeted writing style.",
     "save_settings": "Save Settings",
     "writing_style_sample_hint": "Enter columnist article example here...",
-    "writing_style_active_lang": "Active Language: {}"
+    "writing_style_active_lang": "Active Language: {}",
+    "failed_to_open_guide": "Failed to open guide: {}"
   },
   "backup_restore": {
     "title": "Backup & Restore",
@@ -209,6 +215,7 @@
     "version": "Version 0.1.1",
     "description": "TowiTowi is a note-taking application inspired by the Towitowi bird of Nias (Orthotomus ruficeps baeus). According to local lore, when the Towitowi bird chirps, it brings good news. We hope that writing and sharing your Towi notes brings happiness and good news to you and your community.",
     "view_licenses": "View Licenses",
+    "gemini_guide_button": "Gemini Setup Guide",
     "copyright": "© 2026 io.github.sslaia.towitowi"
   },
   "filter": {
@@ -237,5 +244,13 @@
     "lore_title": "The Chirp of Towitowi",
     "lore_desc": "The name TowiTowi is taken from the Nias bird towi-towi (Orthotomus ruficeps baeus). According to local lore, when the towi-towi bird chirps, it brings good news.",
     "lore_question": "We hope that your Towi notes brings good news to you and the world. Have you towi-ed yet? Start towi-ing now!"
+  },
+  "gemini_alert": {
+    "title": "Gemini AI Assistant",
+    "message": "Would you like to restructure your note or polish your social media posts using Gemini AI? There is a Gemini Setup Guide to help you get your Gemini API key. You can also access this guide at any time from the Settings and About pages.",
+    "go_to_guide": "Go to Setup Guide",
+    "remind_me": "Remind me in a few days",
+    "hide_forever": "Hide forever",
+    "close": "Close"
   }
 }

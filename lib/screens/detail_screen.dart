@@ -22,6 +22,7 @@ import '../widgets/responsive_builder.dart';
 import '../widgets/top_bar.dart';
 import '../widgets/slide_preview_carousel.dart';
 import 'edit_screen.dart';
+import '../widgets/gemini_setup_dialog.dart';
 
 class DetailScreen extends StatefulWidget {
   final Note note;
@@ -63,6 +64,7 @@ class _DetailScreenState extends State<DetailScreen> {
   String _selectedFontFamily = 'Lora';
   final double _contentFontSize = 16.0; // Standard TextField size
   double _slideFontSize = 42.0;   // Slide preview size (matches Instagram defaults)
+  TextAlign _selectedTextAlign = TextAlign.center;
 
   final GlobalKey _repaintKey = GlobalKey();
 
@@ -78,17 +80,30 @@ class _DetailScreenState extends State<DetailScreen> {
     _initTts();
     _postTextController = TextEditingController();
     _updatePostTextController();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+        if (settingsProvider.shouldShowGeminiSetupAlert) {
+          showGeminiSetupDialog(context);
+        }
+      }
+    });
   }
 
   void _updatePostTextController() {
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
+    final aiService = Provider.of<AiContentService>(context, listen: false);
+    final hasAiKey = aiService.hasAnyConfiguredKey(settingsProvider.geminiApiKey);
+
     if (_selectedPreviewTab == 0) {
       _postTextController.text = _shareSummary ?? widget.note.content;
     } else if (_selectedPreviewTab == 1) {
-      _postTextController.text = _facebookSummary ?? '';
+      _postTextController.text = _facebookSummary ?? (hasAiKey ? '' : widget.note.content);
     } else if (_selectedPreviewTab == 2) {
-      _postTextController.text = _mastodonSummary ?? '';
+      _postTextController.text = _mastodonSummary ?? (hasAiKey ? '' : widget.note.content);
     } else if (_selectedPreviewTab == 3) {
-      _postTextController.text = _blueskySummary ?? '';
+      _postTextController.text = _blueskySummary ?? (hasAiKey ? '' : widget.note.content);
     } else {
       _postTextController.text = '';
     }
@@ -628,6 +643,8 @@ class _DetailScreenState extends State<DetailScreen> {
     ThemeData theme,
     SettingsProvider settingsProvider,
   ) {
+    final aiService = Provider.of<AiContentService>(context, listen: false);
+    final hasAiKey = aiService.hasAnyConfiguredKey(settingsProvider.geminiApiKey);
     final currentTab = _selectedPreviewTab;
 
     final String title;
@@ -646,21 +663,21 @@ class _DetailScreenState extends State<DetailScreen> {
       accentColor = const Color(0xFFFFE16D);
     } else if (currentTab == 1) {
       title = 'detail.tab_facebook'.tr();
-      cachedSummary = _facebookSummary;
+      cachedSummary = _facebookSummary ?? (hasAiKey ? null : widget.note.content);
       isGenerating = _isGeneratingFacebook;
       maxChars = 300;
       platformIconPath = 'assets/icon/facebook-icon.svg';
       accentColor = const Color(0xFF0866FF);
     } else if (currentTab == 2) {
       title = 'detail.tab_mastodon'.tr();
-      cachedSummary = _mastodonSummary;
+      cachedSummary = _mastodonSummary ?? (hasAiKey ? null : widget.note.content);
       isGenerating = _isGeneratingMastodon;
       maxChars = 500;
       platformIconPath = 'assets/icon/mastodon-icon.svg';
       accentColor = const Color(0xFF6364FF);
     } else if (currentTab == 3) {
       title = 'detail.tab_bluesky'.tr();
-      cachedSummary = _blueskySummary;
+      cachedSummary = _blueskySummary ?? (hasAiKey ? null : widget.note.content);
       isGenerating = _isGeneratingBluesky;
       maxChars = 300;
       platformIconPath = 'assets/icon/bluesky-icon.svg';
@@ -1059,6 +1076,47 @@ class _DetailScreenState extends State<DetailScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 16.0),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'detail.text_align'.tr(),
+                                      style: theme.textTheme.labelMedium?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6.0),
+                                    Row(
+                                      children: ['left', 'center', 'right'].map((align) {
+                                        final isSelected = (align == 'left' && _selectedTextAlign == TextAlign.left) ||
+                                            (align == 'center' && _selectedTextAlign == TextAlign.center) ||
+                                            (align == 'right' && _selectedTextAlign == TextAlign.right);
+                                        return Padding(
+                                          padding: const EdgeInsets.only(right: 8.0),
+                                          child: IconButton(
+                                            icon: Icon(
+                                              align == 'left'
+                                                  ? Icons.format_align_left_rounded
+                                                  : align == 'center'
+                                                      ? Icons.format_align_center_rounded
+                                                      : Icons.format_align_right_rounded,
+                                              color: isSelected ? theme.colorScheme.primaryContainer : theme.colorScheme.onSurfaceVariant,
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                if (align == 'left') _selectedTextAlign = TextAlign.left;
+                                                if (align == 'center') _selectedTextAlign = TextAlign.center;
+                                                if (align == 'right') _selectedTextAlign = TextAlign.right;
+                                              });
+                                            },
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16.0),
                                   ],
 
                                 // Render the generated post editor
@@ -1077,6 +1135,7 @@ class _DetailScreenState extends State<DetailScreen> {
                                   child: TextField(
                                     controller: _postTextController,
                                     maxLines: null,
+                                    selectAllOnFocus: false,
                                     style: currentTab == 0
                                         ? theme.textTheme.bodyMedium?.copyWith(
                                             height: 1.5,
@@ -1188,7 +1247,7 @@ class _DetailScreenState extends State<DetailScreen> {
                                     ),
 
                                     // Regenerate Button
-                                    if (currentTab != 0)
+                                    if (currentTab != 0 && hasAiKey)
                                       IconButton(
                                         icon: const Icon(
                                           Icons.refresh_rounded,
@@ -1290,12 +1349,16 @@ class _DetailScreenState extends State<DetailScreen> {
         decoration: _getSlideDecoration(theme),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: _selectedTextAlign == TextAlign.left
+              ? CrossAxisAlignment.start
+              : _selectedTextAlign == TextAlign.right
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.center,
           children: [
             // Slide Title Header
             Text(
               widget.note.title.toUpperCase(),
-              textAlign: TextAlign.center,
+              textAlign: _selectedTextAlign,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.getFont(
@@ -1323,7 +1386,7 @@ class _DetailScreenState extends State<DetailScreen> {
             // Content text area - dynamic height
             Text(
               content,
-              textAlign: TextAlign.center,
+              textAlign: _selectedTextAlign,
               style: GoogleFonts.getFont(
                 _selectedFontFamily,
                 fontSize: _slideFontSize,
@@ -1452,6 +1515,7 @@ class _DetailScreenState extends State<DetailScreen> {
           title: Text('detail.unsplash_search_title'.tr()),
           content: TextField(
             controller: controller,
+            selectAllOnFocus: false,
             decoration: InputDecoration(
               hintText: 'detail.unsplash_search_hint'.tr(),
               border: const OutlineInputBorder(),

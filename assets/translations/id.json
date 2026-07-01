@@ -75,6 +75,8 @@
     "italic_tooltip": "Miring",
     "heading_tooltip": "Subjudul",
     "list_tooltip": "Daftar Bulet",
+    "todo_tooltip": "Daftar Tugas",
+    "numbered_list_tooltip": "Daftar Bernomor",
     "code_tooltip": "Blok Kode",
     "restructure_dialog_title": "Restrukturisasi (Gemini)",
     "restructure_refresh_tooltip": "Hasilkan versi lain",
@@ -122,7 +124,7 @@
     "copied_slides_text": "Teks salindia berhasil disalin!",
     "sharing_slides": "Menyiapkan salindia Instagram...",
     "slides_saved_downloads": "Salindia berhasil disimpan di folder Download!",
-    "unsplash_search_title": "Cari Latar Belakang Web",
+    "unsplash_search_title": "Cari Gambar Latar Latar di Web",
     "unsplash_search_hint": "Masukkan kata kunci (misal: alam, bunga)",
     "search": "Cari",
     "cancel": "Batal",
@@ -135,6 +137,8 @@
     "background_style": "Gambar Latar",
     "font_style": "Jenis Huruf",
     "font_size": "Besar Huruf",
+    "text_align": "Rataan Horisontal",
+    "vertical_position": "Posisi Vertikal",
     "share_options_title": "Pilih Format Berbagi",
     "share_as_text": "Bagikan sebagai Teks",
     "share_as_image": "Bagikan sebagai Gambar",
@@ -181,6 +185,7 @@
     "gemini_api_key": "Kunci API Gemini",
     "gemini_api_key_hint": "Masukkan Kunci API dari Google AI Studio",
     "gemini_guide_link": "Butuh bantuan? Lihat Panduan Pengaturan Gemini",
+    "gemini_api_intro": "Apakah Anda ingin sedikit bantuan dalam merestrukturisasi catatan Anda atau bantuan untuk membuat postingan media sosial Anda? Masukkan kunci API di bawah ini dan sesuaikan instruksi sistem serta artikel referensi gaya.",
     "writing_style_settings": "Atur Gaya Tulis",
     "writing_style_instruction": "Instruksi Sistem",
     "writing_style_samples": "Artikel Referensi Gaya",
@@ -189,7 +194,8 @@
     "writing_style_desc": "Konfigurasikan instruksi restrukturisasi Gemini dan artikel referensi untuk meniru gaya penulisan target Anda.",
     "save_settings": "Simpan Pengaturan",
     "writing_style_sample_hint": "Masukkan contoh artikel kolom di sini...",
-    "writing_style_active_lang": "Bahasa Aktif: {}"
+    "writing_style_active_lang": "Bahasa Aktif: {}",
+    "failed_to_open_guide": "Gagal membuka panduan: {}"
   },
   "backup_restore": {
     "title": "Cadangkan & Pulihkan",
@@ -209,6 +215,7 @@
     "version": "Versi 0.1.1",
     "description": "TowiTowi adalah aplikasi pencatat yang terinspirasi oleh burung Towitowi dari Nias (Orthotomus ruficeps baeus). Menurut kepercayaan setempat, kicauan burung Towitowi membawa kabar baik. Kami berharap bahwa menulis dan membagikan catatan Towi Anda membagikan kabar baik bagi Anda dan komunitas Anda. Silakan ber-towi hari ini juga!",
     "view_licenses": "Lihat Lisensi",
+    "gemini_guide_button": "Panduan Setup Gemini",
     "copyright": "© 2026 io.github.sslaia.towitowi"
   },
   "filter": {
@@ -237,5 +244,13 @@
     "lore_title": "Kicauan Towitowi",
     "lore_desc": "Nama TowiTowi diambil dari nama burung Nias towi-towi (Orthotomus ruficeps baeus). Menurut kepercayaan setempat, ketika burung Towitowi berkicau, ia membawa kabar baik.",
     "lore_question": "Kami berharap rekaman catatan Towi membawa kabar baik bagi Anda dan dunia. Apakah Anda sudah ber-towi-ria hari ini? Mulai ber-towi sekarang!"
+  },
+  "gemini_alert": {
+    "title": "Asisten AI Gemini",
+    "message": "Apakah Anda ingin merestrukturisasi catatan Anda atau merapikan postingan media sosial Anda dengan Gemini AI? Tersedia Panduan Setup Gemini untuk membantu Anda mendapatkan kunci API Gemini. Anda juga dapat mengakses panduan ini kapan saja dari halaman Pengaturan dan Tentang.",
+    "go_to_guide": "Buka Panduan",
+    "remind_me": "Ingatkan beberapa hari lagi",
+    "hide_forever": "Sembunyikan selamanya",
+    "close": "Tutup"
   }
 }

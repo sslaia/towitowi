@@ -133,6 +133,8 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
   bool _isAiGenerating = false;
   String _selectedFontFamily = 'Lora';
   double _contentFontSize = 42.0;
+  TextAlign _selectedTextAlign = TextAlign.center;
+  Alignment _selectedVerticalAlignment = Alignment.center;
 
   @override
   void initState() {
@@ -220,6 +222,7 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
           title: Text('detail.unsplash_search_title'.tr()),
           content: TextField(
             controller: controller,
+            selectAllOnFocus: false,
             decoration: InputDecoration(
               hintText: 'detail.unsplash_search_hint'.tr(),
               border: const OutlineInputBorder(),
@@ -501,6 +504,7 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
           ),
           content: TextField(
             controller: textController,
+            selectAllOnFocus: false,
             maxLines: 8,
             minLines: 3,
             decoration: InputDecoration(
@@ -553,6 +557,9 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final activeTheme = slideThemes[_currentThemeIndex];
+    final settingsProvider = Provider.of<SettingsProvider>(context);
+    final aiService = Provider.of<AiContentService>(context, listen: false);
+    final hasAiKey = aiService.hasAnyConfiguredKey(settingsProvider.geminiApiKey);
 
     return Stack(
       clipBehavior: Clip.none,
@@ -923,6 +930,88 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
               ],
             ),
             const SizedBox(height: 16.0),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'detail.text_align'.tr(),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 6.0),
+                Row(
+                  children: ['left', 'center', 'right'].map((align) {
+                    final isSelected = (align == 'left' && _selectedTextAlign == TextAlign.left) ||
+                        (align == 'center' && _selectedTextAlign == TextAlign.center) ||
+                        (align == 'right' && _selectedTextAlign == TextAlign.right);
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: IconButton(
+                        icon: Icon(
+                          align == 'left'
+                              ? Icons.format_align_left_rounded
+                              : align == 'center'
+                                  ? Icons.format_align_center_rounded
+                                  : Icons.format_align_right_rounded,
+                          color: isSelected ? theme.colorScheme.primaryContainer : theme.colorScheme.onSurfaceVariant,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            if (align == 'left') _selectedTextAlign = TextAlign.left;
+                            if (align == 'center') _selectedTextAlign = TextAlign.center;
+                            if (align == 'right') _selectedTextAlign = TextAlign.right;
+                          });
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12.0),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'detail.vertical_position'.tr(),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 6.0),
+                Row(
+                  children: ['top', 'center', 'bottom'].map((pos) {
+                    final isSelected = (pos == 'top' && _selectedVerticalAlignment == Alignment.topCenter) ||
+                        (pos == 'center' && _selectedVerticalAlignment == Alignment.center) ||
+                        (pos == 'bottom' && _selectedVerticalAlignment == Alignment.bottomCenter);
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: IconButton(
+                        icon: Icon(
+                          pos == 'top'
+                              ? Icons.vertical_align_top_rounded
+                              : pos == 'center'
+                                  ? Icons.vertical_align_center_rounded
+                                  : Icons.vertical_align_bottom_rounded,
+                          color: isSelected ? theme.colorScheme.primaryContainer : theme.colorScheme.onSurfaceVariant,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            if (pos == 'top') _selectedVerticalAlignment = Alignment.topCenter;
+                            if (pos == 'center') _selectedVerticalAlignment = Alignment.center;
+                            if (pos == 'bottom') _selectedVerticalAlignment = Alignment.bottomCenter;
+                          });
+                        },
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16.0),
 
             const Divider(height: 1),
             const SizedBox(height: 8.0),
@@ -945,12 +1034,13 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
               alignment: WrapAlignment.end,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.auto_awesome_rounded, size: 20.0),
-                  tooltip: 'detail.craft_ai_slides'.tr(),
-                  color: const Color(0xFFFFE16D),
-                  onPressed: _isAiGenerating ? null : _craftSlidesWithAi,
-                ),
+                if (hasAiKey)
+                  IconButton(
+                    icon: const Icon(Icons.auto_awesome_rounded, size: 20.0),
+                    tooltip: 'detail.craft_ai_slides'.tr(),
+                    color: const Color(0xFFFFE16D),
+                    onPressed: _isAiGenerating ? null : _craftSlidesWithAi,
+                  ),
                 if (_isModified)
                   IconButton(
                     icon: const Icon(Icons.settings_backup_restore_rounded, size: 20.0),
@@ -1010,12 +1100,16 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
         padding: const EdgeInsets.symmetric(horizontal: 100.0, vertical: 80.0),
         decoration: _getSlideDecoration(theme),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: _selectedTextAlign == TextAlign.left
+              ? CrossAxisAlignment.start
+              : _selectedTextAlign == TextAlign.right
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.center,
           children: [
             // Slide Title Header
             Text(
               widget.noteTitle.toUpperCase(),
-              textAlign: TextAlign.center,
+              textAlign: _selectedTextAlign,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.getFont(
@@ -1043,10 +1137,27 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
             // Content text area
             SizedBox(
               height: 600.0,
-              child: Center(
+              child: Align(
+                alignment: _selectedVerticalAlignment == Alignment.topCenter
+                    ? (_selectedTextAlign == TextAlign.left
+                        ? Alignment.topLeft
+                        : _selectedTextAlign == TextAlign.right
+                            ? Alignment.topRight
+                            : Alignment.topCenter)
+                    : _selectedVerticalAlignment == Alignment.bottomCenter
+                        ? (_selectedTextAlign == TextAlign.left
+                            ? Alignment.bottomLeft
+                            : _selectedTextAlign == TextAlign.right
+                                ? Alignment.bottomRight
+                                : Alignment.bottomCenter)
+                        : (_selectedTextAlign == TextAlign.left
+                            ? Alignment.centerLeft
+                            : _selectedTextAlign == TextAlign.right
+                                ? Alignment.centerRight
+                                : Alignment.center),
                 child: Text(
                   content,
-                  textAlign: TextAlign.center,
+                  textAlign: _selectedTextAlign,
                   style: GoogleFonts.getFont(
                     _selectedFontFamily,
                     fontSize: _contentFontSize,

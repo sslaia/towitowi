@@ -14,5 +14,11 @@ A note-taking app designed to bridge the gap between your analog thoughts and th
 
 ## Version
 
-- 0.1.1 New image, light and dark mode, improved share options
-- 0.1.0 Initial release with basic features
+Version 0.1.1:
+- New light mode
+- Improved editing features
+- Improved documentation
+- Various fixes
+
+Version 0.1.0:
+- Initial release with basic features
