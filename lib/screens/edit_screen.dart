@@ -218,7 +218,7 @@ class _EditScreenState extends State<EditScreen> {
     }
 
     // Show the bottom sheet and await the result
-    final resultText = await showModalBottomSheet<String>(
+    final result = await showModalBottomSheet<RestructureResult>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -229,17 +229,58 @@ class _EditScreenState extends State<EditScreen> {
       ),
     );
 
-    // If user clicked "Yes, Apply" and returned the text
-    if (resultText != null && mounted) {
-      setState(() {
-        _contentController.text = resultText;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('edit.restructure_success_applied'.tr()),
-          backgroundColor: Colors.green,
-        ),
-      );
+    if (result != null && mounted) {
+      final editedText = result.text;
+      switch (result.action) {
+        case RestructureAction.replace:
+          setState(() {
+            _contentController.text = editedText;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('edit.restructure_success_applied'.tr()),
+              backgroundColor: Colors.green,
+            ),
+          );
+          break;
+        case RestructureAction.append:
+          setState(() {
+            final currentText = _contentController.text.trim();
+            if (currentText.isEmpty) {
+              _contentController.text = editedText;
+            } else {
+              _contentController.text = "$currentText\n\n---\n\n$editedText";
+            }
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('edit.restructure_success_applied'.tr()),
+              backgroundColor: Colors.green,
+            ),
+          );
+          break;
+        case RestructureAction.newNote:
+          final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+          final originalTitle = _titleController.text.trim();
+          final title = _toTitleCase(originalTitle.isEmpty ? 'Untitled' : 'Restructured - $originalTitle');
+          final label = _labelController.text.trim().toUpperCase();
+          final newNote = Note(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            title: title,
+            label: label.isEmpty ? 'General' : label,
+            content: editedText,
+            date: DateTime.now(),
+          );
+          notesProvider.addNote(newNote);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('detail.saved_as_new_note'.tr()),
+              backgroundColor: Colors.green,
+            ),
+          );
+          break;
+      }
     }
   }
 
@@ -888,6 +929,49 @@ class _EditScreenState extends State<EditScreen> {
   }
 }
 
+enum RestructureAction {
+  replace,
+  append,
+  newNote,
+}
+
+class RestructureResult {
+  final String text;
+  final RestructureAction action;
+
+  RestructureResult(this.text, this.action);
+}
+
+List<String> parseRestructuredVersions(String text) {
+  final versionRegex = RegExp(
+    r'(?:^|\n)(?:===?\s*(?:VERSION|ALTERNATIVE|OPTION|Version|Alternative|Option)\s*\d+\s*===?|###?\s*(?:VERSION|ALTERNATIVE|OPTION|Version|Alternative|Option)\s*\d+|(?:VERSION|ALTERNATIVE|OPTION|Version|Alternative|Option)\s*\d+[:\s\-\n])',
+    caseSensitive: false,
+  );
+  
+  if (versionRegex.hasMatch(text)) {
+    final matches = versionRegex.allMatches(text).toList();
+    final versions = <String>[];
+    for (int i = 0; i < matches.length; i++) {
+      final start = matches[i].end;
+      final end = (i + 1 < matches.length) ? matches[i + 1].start : text.length;
+      final versionText = text.substring(start, end).trim();
+      if (versionText.isNotEmpty) {
+        versions.add(versionText);
+      }
+    }
+    if (versions.isNotEmpty) return versions;
+  }
+  
+  if (text.contains('---')) {
+    final parts = text.split('---').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    if (parts.length > 1) {
+      return parts;
+    }
+  }
+  
+  return [text.trim()];
+}
+
 class GeminiRestructureSheet extends StatefulWidget {
   final String rawThoughts;
   final String userApiKey;
@@ -906,6 +990,9 @@ class GeminiRestructureSheet extends StatefulWidget {
 
 class _GeminiRestructureSheetState extends State<GeminiRestructureSheet> {
   String? _restructuredText;
+  List<String> _versions = [];
+  int _selectedVersionIndex = 0;
+  List<TextEditingController> _controllers = [];
   bool _isLoading = false;
   String? _error;
 
@@ -917,6 +1004,14 @@ class _GeminiRestructureSheetState extends State<GeminiRestructureSheet> {
         _generateRestructured();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    for (var c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
   }
 
   Future<void> _generateRestructured() async {
@@ -943,8 +1038,15 @@ class _GeminiRestructureSheetState extends State<GeminiRestructureSheet> {
         styleReferences: styleReferences,
       );
       if (mounted) {
+        final parsedVersions = parseRestructuredVersions(result);
         setState(() {
           _restructuredText = result;
+          _versions = parsedVersions;
+          for (var c in _controllers) {
+            c.dispose();
+          }
+          _controllers = parsedVersions.map((v) => TextEditingController(text: v)).toList();
+          _selectedVersionIndex = 0;
           _isLoading = false;
         });
       }
@@ -1027,6 +1129,33 @@ class _GeminiRestructureSheetState extends State<GeminiRestructureSheet> {
             ],
           ),
           const SizedBox(height: 16.0),
+          if (!_isLoading && _error == null && _versions.length > 1) ...[
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: List.generate(_versions.length, (index) {
+                  final isSelected = index == _selectedVersionIndex;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: ChoiceChip(
+                      label: Text('edit.restructure_version_tab'.tr(args: [(index + 1).toString()])),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() {
+                            _selectedVersionIndex = index;
+                          });
+                        }
+                      },
+                      selectedColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                      checkmarkColor: theme.colorScheme.primaryContainer,
+                    ),
+                  );
+                }),
+              ),
+            ),
+            const SizedBox(height: 12.0),
+          ],
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(16.0),
@@ -1087,7 +1216,64 @@ class _GeminiRestructureSheetState extends State<GeminiRestructureSheet> {
                       ),
                       padding: const EdgeInsets.symmetric(vertical: 14.0),
                     ),
-                    onPressed: () => Navigator.pop(context, _restructuredText),
+                    onPressed: () async {
+                      if (_controllers.isEmpty || _selectedVersionIndex >= _controllers.length) {
+                        Navigator.pop(context);
+                        return;
+                      }
+                      final editedText = _controllers[_selectedVersionIndex].text;
+
+                      final action = await showDialog<RestructureAction>(
+                        context: context,
+                        builder: (BuildContext dialogContext) {
+                          return AlertDialog(
+                            backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16.0),
+                            ),
+                            title: Text(
+                              'edit.restructure_apply_options_title'.tr(),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  leading: Icon(Icons.find_replace, color: Theme.of(context).colorScheme.primaryContainer),
+                                  title: Text('edit.restructure_apply_replace'.tr()),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                                  onTap: () => Navigator.pop(dialogContext, RestructureAction.replace),
+                                ),
+                                const SizedBox(height: 4.0),
+                                ListTile(
+                                  leading: Icon(Icons.add_to_photos_outlined, color: Theme.of(context).colorScheme.primaryContainer),
+                                  title: Text('edit.restructure_apply_append'.tr()),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                                  onTap: () => Navigator.pop(dialogContext, RestructureAction.append),
+                                ),
+                                const SizedBox(height: 4.0),
+                                ListTile(
+                                  leading: Icon(Icons.note_add_outlined, color: Theme.of(context).colorScheme.primaryContainer),
+                                  title: Text('edit.restructure_apply_new_note'.tr()),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                                  onTap: () => Navigator.pop(dialogContext, RestructureAction.newNote),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(dialogContext),
+                                child: Text('edit.cancel'.tr()),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+
+                      if (action != null && context.mounted) {
+                        Navigator.pop(context, RestructureResult(editedText, action));
+                      }
+                    },
                     child: Text(
                       'edit.restructure_yes_apply'.tr(),
                       style: TextStyle(
@@ -1183,14 +1369,22 @@ class _GeminiRestructureSheetState extends State<GeminiRestructureSheet> {
       );
     }
 
-    if (_restructuredText != null) {
+    if (_controllers.isNotEmpty && _selectedVersionIndex < _controllers.length) {
+      final controller = _controllers[_selectedVersionIndex];
       return Scrollbar(
         thumbVisibility: true,
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.only(right: 8.0),
-            child: SelectableText(
-              _restructuredText!,
+            child: TextField(
+              controller: controller,
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
+              decoration: InputDecoration(
+                hintText: 'edit.restructure_edit_hint'.tr(),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+              ),
               style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
             ),
           ),

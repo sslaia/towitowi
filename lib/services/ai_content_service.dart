@@ -70,10 +70,16 @@ class AiContentService {
     buffer.writeln("Raw thoughts to restructure:");
     buffer.writeln(rawThoughts);
 
+    final safetySystemInstruction = "$systemInstruction\n\n"
+        "SAFETY & PRESERVATION GUIDELINES:\n"
+        "1. Do NOT introduce new characters, key plot points, narrative events, figures, or external historical facts that are not present in the user's raw thoughts. (You may embellish or add descriptive sensory details like weather, environment, or pacing if the writing style instruction calls for it, but do not change the core story, facts, or characters).\n"
+        "2. Avoid shortening or summarizing the text significantly unless specifically requested in the writing style instruction above. Try to match the original narrative length and level of detail.\n"
+        "3. If suggesting multiple alternative versions, they must be clearly separated by '---' or headings like '### Version 1', '### Version 2', '### Version 3'. Do not add any introductory or concluding text outside the versions.";
+
     return _generateWithFallback(
       buffer.toString(),
       apiKey,
-      systemInstruction: Content.system(systemInstruction),
+      systemInstruction: Content.system(safetySystemInstruction),
     );
   }
 

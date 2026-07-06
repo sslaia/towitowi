@@ -611,6 +611,28 @@ class _DetailScreenState extends State<DetailScreen> {
                         listBullet: theme.textTheme.bodyLarge?.copyWith(
                           color: theme.colorScheme.primaryContainer,
                         ),
+                        blockquote: GoogleFonts.lora(
+                          textStyle: theme.textTheme.bodyLarge?.copyWith(
+                            fontStyle: FontStyle.italic,
+                            height: 1.8,
+                            fontSize: 18.0,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+                          ),
+                        ),
+                        blockquoteDecoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.3),
+                          border: Border(
+                            left: BorderSide(
+                              color: theme.colorScheme.primaryContainer,
+                              width: 4.0,
+                            ),
+                          ),
+                          borderRadius: BorderRadius.circular(4.0),
+                        ),
+                        blockquotePadding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 12.0,
+                        ),
                         code: theme.textTheme.bodyMedium?.copyWith(
                           fontFamily: 'monospace',
                           backgroundColor: theme.colorScheme.surfaceContainerHigh,

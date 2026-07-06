@@ -1,7 +1,7 @@
 name: towitowi
 description: "A simple note taking app in the age of AI."
 publish_to: 'none'
-version: 0.1.1+2
+version: 0.1.2+3
 
 environment:
   sdk: ^3.11.5
