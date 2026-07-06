@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
 import '../models/note.dart';
 import '../providers/notes_provider.dart';
 
@@ -238,6 +240,132 @@ class BackupService {
       await notesProvider.updateNote(note);
     } else {
       await notesProvider.addNote(note);
+    }
+  }
+
+  static const String _lastBackupTimeKey = 'backup_service_last_auto_backup_time';
+
+  /// Returns true if an auto-backup file already exists in application documents.
+  static Future<bool> hasAutoBackup() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final backupFile = File('${directory.path}/towitowi_auto_backup.zip');
+      return await backupFile.exists();
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Restores notes from the existing auto-backup file, returning the count of notes imported.
+  static Future<int> restoreFromAutoBackup(NotesProvider notesProvider) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final backupFile = File('${directory.path}/towitowi_auto_backup.zip');
+    if (!await backupFile.exists()) {
+      throw Exception('backup_file_not_found');
+    }
+
+    final bytes = await backupFile.readAsBytes();
+    int importCount = 0;
+
+    try {
+      final archive = ZipDecoder().decodeBytes(bytes);
+
+      for (final archiveFile in archive) {
+        if (archiveFile.isFile && archiveFile.name.endsWith('.md')) {
+          try {
+            final contentBytes = archiveFile.content as List<int>;
+            final content = utf8.decode(contentBytes);
+            final note = _parseMarkdownNote(archiveFile.name, content);
+            await _saveImportedNote(notesProvider, note);
+            importCount++;
+          } catch (e) {
+            debugPrint('Error restoring file from zip: ${archiveFile.name}, error: $e');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error decoding auto-backup zip: $e');
+      throw Exception('invalid_backup_archive');
+    }
+
+    if (importCount == 0) {
+      throw Exception('no_valid_notes');
+    }
+
+    return importCount;
+  }
+
+  /// Safely performs an auto-backup of the given notes list.
+  /// It encodes notes to a ZIP, writes it to a temporary file,
+  /// and renames/moves it to ensure atomic write.
+  static Future<void> performAutoBackup(List<Note> notes) async {
+    if (notes.isEmpty) return;
+
+    try {
+      final archive = Archive();
+      final Map<String, int> filenameCounts = {};
+
+      for (final note in notes) {
+        String baseFilename = _sanitizeFilename(note.title);
+        String filename = '$baseFilename.md';
+
+        if (filenameCounts.containsKey(baseFilename)) {
+          final count = filenameCounts[baseFilename]! + 1;
+          filenameCounts[baseFilename] = count;
+          filename = '${baseFilename}_$count.md';
+        } else {
+          filenameCounts[baseFilename] = 1;
+        }
+
+        final content = _serializeNoteToMarkdown(note);
+        final contentBytes = utf8.encode(content);
+        final archiveFile = ArchiveFile(
+          filename,
+          contentBytes.length,
+          contentBytes,
+        );
+        archive.addFile(archiveFile);
+      }
+
+      final zipEncoder = ZipEncoder();
+      final zipBytes = zipEncoder.encode(archive);
+
+      final directory = await getApplicationDocumentsDirectory();
+      final backupFile = File('${directory.path}/towitowi_auto_backup.zip');
+      final tempFile = File('${directory.path}/towitowi_auto_backup.zip.tmp');
+
+      // Write to temp file first
+      final bytesToWrite = zipBytes is Uint8List ? zipBytes : Uint8List.fromList(zipBytes);
+      await tempFile.writeAsBytes(bytesToWrite, flush: true);
+
+      // Rename temp file to target backup file to overwrite atomically
+      if (await tempFile.exists()) {
+        await tempFile.rename(backupFile.path);
+        debugPrint('Auto-backup completed successfully at: ${backupFile.path}');
+      }
+    } catch (e) {
+      debugPrint('Auto-backup failed: $e');
+    }
+  }
+
+  /// Triggers auto-backup if more than 12 hours have passed since the last one.
+  static Future<void> checkAndTriggerAutoBackup(List<Note> notes) async {
+    if (notes.isEmpty) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastBackupMillis = prefs.getInt(_lastBackupTimeKey) ?? 0;
+      final nowMillis = DateTime.now().millisecondsSinceEpoch;
+
+      // 12 hours = 12 * 60 * 60 * 1000 = 43,200,000 milliseconds
+      const twelveHoursMillis = 12 * 60 * 60 * 1000;
+
+      if (nowMillis - lastBackupMillis >= twelveHoursMillis) {
+        await performAutoBackup(notes);
+        await prefs.setInt(_lastBackupTimeKey, nowMillis);
+      }
+    } catch (e) {
+      debugPrint('Error checking/triggering auto-backup: $e');
     }
   }
 }

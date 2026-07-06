@@ -190,6 +190,71 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
+  void _handleRestoreAutoBackup(BuildContext context) async {
+    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+
+    // Show confirmation dialog
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          backgroundColor: theme.colorScheme.surface,
+          title: Text(
+            'backup_restore.confirm_restore_title'.tr(),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Text('backup_restore.confirm_restore_message'.tr()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'detail.cancel'.tr(),
+                style: TextStyle(color: theme.colorScheme.secondaryContainer),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primaryContainer,
+                foregroundColor: theme.colorScheme.onPrimaryContainer,
+              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: Text('detail.confirm'.tr()),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final count = await BackupService.restoreFromAutoBackup(notesProvider);
+      if (context.mounted && count > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('backup_restore.import_success'.tr(args: [count.toString()])),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        final errorMsg = e.toString().contains('backup_file_not_found')
+            ? 'backup_restore.no_notes_imported'.tr()
+            : e.toString();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('backup_restore.import_failed'.tr(args: [errorMsg])),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   void _navigateToSettings() {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
@@ -1355,6 +1420,52 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ),
               ],
+            ),
+
+            FutureBuilder<bool>(
+              future: BackupService.hasAutoBackup(),
+              builder: (context, snapshot) {
+                final hasBackup = snapshot.data ?? false;
+                if (!hasBackup) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.brightness == Brightness.dark
+                            ? const Color(0xFFFF9C9C)
+                            : theme.colorScheme.error,
+                        side: BorderSide(
+                          color: theme.brightness == Brightness.dark
+                              ? const Color(0xFFFF9C9C)
+                              : theme.colorScheme.error,
+                          width: 1.5,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16.0,
+                        ),
+                      ),
+                      icon: const Icon(Icons.settings_backup_restore_rounded, size: 18.0),
+                      label: Text(
+                        'backup_restore.restore_auto_button'.tr(),
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.brightness == Brightness.dark
+                              ? const Color(0xFFFF9C9C)
+                              : theme.colorScheme.error,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.0,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      onPressed: () => _handleRestoreAutoBackup(context),
+                    ),
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 32.0),

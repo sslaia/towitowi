@@ -43,14 +43,14 @@
     "no_note_selected": "Tidak Ada Catatan Terpilih",
     "recent_notes": "Catatan Towi Terbaru",
     "view_library": "LIHAT SEMUA CATATAN",
-    "bookmarked_notes": "Catatan Towi Ditandai",
-    "no_bookmarks": "Belum ada catatan yang ditandai."
+    "bookmarked_notes": "Catatan Towi Favorit",
+    "no_bookmarks": "Belum ada towi favorit."
   },
   "nav": {
     "menu": "MENU",
     "library": "PUSTAKA",
     "search": "CARI",
-    "bookmarks": "TANDA BUKU",
+    "bookmarks": "FAVORIT",
     "drafts": "DRAF",
     "settings": "PENGATURAN"
   },
@@ -120,8 +120,8 @@
     "listen_tooltip": "Dengarkan catatan",
     "stop_tooltip": "Berhenti mendengarkan",
     "social_preview": "PRATINJAU CIUTAN TOWI MEDIA SOSIAL",
-    "bookmarked": "Catatan ditandai",
-    "unbookmarked": "Tanda buku dihapus",
+    "bookmarked": "Tambahkan ke daftar favorit",
+    "unbookmarked": "Hapus dari daftar favorit",
     "saved_as_new_note": "Disimpan sebagai catatan baru!",
     "whole_note": "Catatan utuh",
     "instagram": "Instagram",
@@ -214,7 +214,10 @@
     "import_failed": "Impor gagal: {}",
     "no_notes_to_export": "Tidak ada catatan untuk diekspor.",
     "no_notes_imported": "Tidak ada catatan valid yang ditemukan untuk diimpor.",
-    "save_backup_dialog_title": "Simpan Arsip Cadangan"
+    "save_backup_dialog_title": "Simpan Arsip Cadangan",
+    "restore_auto_button": "PULIHKAN DARI CADANGAN OTOMATIS",
+    "confirm_restore_title": "Pulihkan Cadangan Otomatis",
+    "confirm_restore_message": "Apakah Anda yakin ingin memulihkan catatan dari cadangan otomatis terakhir? Catatan yang ada akan digabungkan, dan catatan yang diubah akan diperbarui ke versi cadangan."
   },
   "about": {
     "title": "Tentang",

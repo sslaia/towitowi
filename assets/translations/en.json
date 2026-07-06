@@ -214,7 +214,10 @@
     "import_failed": "Import failed: {}",
     "no_notes_to_export": "No notes to export.",
     "no_notes_imported": "No valid notes found to import.",
-    "save_backup_dialog_title": "Save Backup Archive"
+    "save_backup_dialog_title": "Save Backup Archive",
+    "restore_auto_button": "RESTORE FROM AUTO-BACKUP",
+    "confirm_restore_title": "Restore Auto-Backup",
+    "confirm_restore_message": "Are you sure you want to restore notes from the last auto-backup? Existing notes will be merged, and modified notes will be updated to the backup version."
   },
   "about": {
     "title": "About",

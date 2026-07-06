@@ -1,15 +1,19 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/note.dart';
 import '../database/database_service.dart';
 import '../database/notes_repository.dart';
+import '../services/backup_service.dart';
 
 class NotesProvider with ChangeNotifier {
   final List<Note> _notes = [];
   bool _isLoading = true;
   late final NotesRepository _notesRepository;
+  Timer? _autoBackupTimer;
 
   NotesProvider() {
     _initDatabaseAndLoad();
+    _startAutoBackupTimer();
   }
 
   List<Note> get notes => List.unmodifiable(_notes);
@@ -117,6 +121,9 @@ class NotesProvider with ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+      if (!kIsWeb) {
+        BackupService.checkAndTriggerAutoBackup(_notes);
+      }
     }
   }
 
@@ -126,6 +133,7 @@ class NotesProvider with ChangeNotifier {
     notifyListeners();
     if (!kIsWeb) {
       await _notesRepository.insert(note);
+      BackupService.checkAndTriggerAutoBackup(_notes);
     }
   }
 
@@ -137,6 +145,7 @@ class NotesProvider with ChangeNotifier {
       notifyListeners();
       if (!kIsWeb) {
         await _notesRepository.update(updatedNote);
+        BackupService.checkAndTriggerAutoBackup(_notes);
       }
     }
   }
@@ -146,6 +155,7 @@ class NotesProvider with ChangeNotifier {
     notifyListeners();
     if (!kIsWeb) {
       await _notesRepository.delete(id);
+      BackupService.checkAndTriggerAutoBackup(_notes);
     }
   }
 
@@ -155,5 +165,19 @@ class NotesProvider with ChangeNotifier {
     } catch (_) {
       return null;
     }
+  }
+
+  void _startAutoBackupTimer() {
+    _autoBackupTimer = Timer.periodic(const Duration(hours: 1), (timer) {
+      if (!kIsWeb && _notes.isNotEmpty) {
+        BackupService.checkAndTriggerAutoBackup(_notes);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoBackupTimer?.cancel();
+    super.dispose();
   }
 }
