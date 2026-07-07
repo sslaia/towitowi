@@ -261,5 +261,20 @@
     "remind_me": "Remind me in a few days",
     "hide_forever": "Hide forever",
     "close": "Close"
+  },
+  "sync": {
+    "title": "Google Drive Synchronization",
+    "desc": "Keep your notes synchronized across all your devices securely using your private Google Drive App Data folder.",
+    "connect_button": "CONNECT GOOGLE DRIVE",
+    "disconnect_button": "DISCONNECT",
+    "sync_button": "SYNC NOW",
+    "syncing": "Syncing...",
+    "success": "Synchronization completed successfully!",
+    "failed": "Synchronization failed: {}",
+    "conflict_title": "Merge Conflict Detected",
+    "conflict_desc": "This note was modified on both your local device and the cloud since the last sync. Please select the version you want to keep:",
+    "local_version": "LOCAL VERSION (This Device)",
+    "remote_version": "CLOUD VERSION (Google Drive)",
+    "cancel": "CANCEL SYNC"
   }
 }

@@ -261,5 +261,20 @@
     "remind_me": "Ingatkan beberapa hari lagi",
     "hide_forever": "Sembunyikan selamanya",
     "close": "Tutup"
+  },
+  "sync": {
+    "title": "Sinkronisasi Google Drive",
+    "desc": "Jaga agar catatan Anda tetap tersinkronisasi di semua perangkat dengan aman menggunakan folder Data Aplikasi Google Drive pribadi Anda.",
+    "connect_button": "HUBUNGKAN GOOGLE DRIVE",
+    "disconnect_button": "PUTUSKAN SAMBUNGAN",
+    "sync_button": "SINKRONKAN SEKARANG",
+    "syncing": "Menyinkronkan...",
+    "success": "Sinkronisasi berhasil diselesaikan!",
+    "failed": "Sinkronisasi gagal: {}",
+    "conflict_title": "Konflik Sinkronisasi Terdeteksi",
+    "conflict_desc": "Catatan ini telah diubah di perangkat lokal dan cloud sejak terakhir kali disinkronkan. Silakan pilih versi yang ingin Anda simpan:",
+    "local_version": "VERSI LOKAL (Perangkat Ini)",
+    "remote_version": "VERSI CLOUD (Google Drive)",
+    "cancel": "BATALKAN SINKRONISASI"
   }
 }

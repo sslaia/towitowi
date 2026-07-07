@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/note.dart';
-import '../database/database_service.dart';
-import '../database/notes_repository.dart';
+import '../database/database.dart';
+import '../services/legacy_migration_service.dart';
 import '../services/backup_service.dart';
 
 class NotesProvider with ChangeNotifier {
   final List<Note> _notes = [];
   bool _isLoading = true;
-  late final NotesRepository _notesRepository;
+  late final AppDatabase _db;
   Timer? _autoBackupTimer;
 
   NotesProvider() {
@@ -18,6 +18,7 @@ class NotesProvider with ChangeNotifier {
 
   List<Note> get notes => List.unmodifiable(_notes);
   bool get isLoading => _isLoading;
+  AppDatabase get db => _db;
 
   Future<void> _initDatabaseAndLoad() async {
     if (kIsWeb) {
@@ -28,19 +29,13 @@ class NotesProvider with ChangeNotifier {
     }
 
     try {
-      // 1. Configure DatabaseService
-      final dbService = DatabaseService();
-      dbService.dbName = 'stream_notes_v2.db';
-      dbService.dbVersion = 1;
-      // Register creation queries
-      dbService.onCreateTablesQueries = [
-        NotesRepository.createTableQuery,
-      ];
+      // 1. Initialize Drift Database
+      _db = AppDatabase();
 
-      // 2. Instantiate repository
-      _notesRepository = NotesRepository(dbService: dbService);
+      // 2. Perform legacy sqflite database migration if needed
+      await LegacyMigrationService.migrateIfNeeded(_db);
 
-      // 3. Load notes
+      // 3. Load active notes
       await _loadNotesFromDb();
     } catch (e) {
       if (kDebugMode) {
@@ -108,11 +103,12 @@ class NotesProvider with ChangeNotifier {
 
   Future<void> _loadNotesFromDb() async {
     try {
-      final dbNotes = await _notesRepository.getAll();
+      final driftNotes = await _db.getActiveNotes();
+      final domainNotes = driftNotes.map((n) => n.toDomainNote()).toList();
       
       // Sort notes descending by date (newest first)
-      dbNotes.sort((a, b) => b.date.compareTo(a.date));
-      _notes.addAll(dbNotes);
+      domainNotes.sort((a, b) => b.date.compareTo(a.date));
+      _notes.addAll(domainNotes);
     } catch (e) {
       if (kDebugMode) {
         print("Error loading notes: $e");
@@ -127,12 +123,18 @@ class NotesProvider with ChangeNotifier {
     }
   }
 
+  /// Reloads notes from the database. Useful after a synchronization cycle.
+  Future<void> reloadNotes() async {
+    _notes.clear();
+    await _loadNotesFromDb();
+  }
+
   Future<void> addNote(Note note) async {
     _notes.add(note);
     _notes.sort((a, b) => b.date.compareTo(a.date));
     notifyListeners();
     if (!kIsWeb) {
-      await _notesRepository.insert(note);
+      await _db.saveNote(note.toDriftNote(createdAt: DateTime.now(), updatedAt: DateTime.now()));
       BackupService.checkAndTriggerAutoBackup(_notes);
     }
   }
@@ -144,7 +146,7 @@ class NotesProvider with ChangeNotifier {
       _notes.sort((a, b) => b.date.compareTo(a.date));
       notifyListeners();
       if (!kIsWeb) {
-        await _notesRepository.update(updatedNote);
+        await _db.saveNote(updatedNote.toDriftNote(updatedAt: DateTime.now()));
         BackupService.checkAndTriggerAutoBackup(_notes);
       }
     }
@@ -154,7 +156,7 @@ class NotesProvider with ChangeNotifier {
     _notes.removeWhere((note) => note.id == id);
     notifyListeners();
     if (!kIsWeb) {
-      await _notesRepository.delete(id);
+      await _db.softDeleteNote(id);
       BackupService.checkAndTriggerAutoBackup(_notes);
     }
   }

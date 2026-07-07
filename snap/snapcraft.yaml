@@ -1,0 +1,32 @@
+name: towitowi
+version: '0.1.2'
+summary: A simple note taking app in the age of AI.
+description: |
+  A note-taking app designed to bridge the gap between your analog thoughts and the digital world. 
+  In an age where AI can write for us, TowiTowi helps you preserve your authentic voice while 
+  leveraging artificial intelligence for enhancement, not replacement.
+
+confinement: strict
+base: core22
+grade: stable
+
+apps:
+  towitowi:
+    command: towitowi
+    extensions: [flutter]
+    plugs:
+      - network
+      - home
+      - unity7
+      - gsettings
+      - opengl
+      - desktop
+      - desktop-legacy
+      - wayland
+      - x11
+
+parts:
+  towitowi:
+    source: .
+    plugin: flutter
+    flutter-target: lib/main.dart

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../providers/notes_provider.dart';
@@ -13,6 +14,8 @@ import 'edit_screen.dart';
 import 'about_screen.dart';
 import 'guide_screen.dart';
 import '../services/backup_service.dart';
+import '../services/sync_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -31,6 +34,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   bool _showAllNotes = false;
   bool _sortAscending = false;
   String? _selectedLabelFilter;
+
+  bool _isSyncing = false;
+  bool _isGoogleSignedIn = false;
+  String _syncTimeText = 'Never synced';
 
   late final SettingsProvider _settingsProvider;
   late final TextEditingController _geminiApiKeyController;
@@ -54,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _searchFocusNode = FocusNode(skipTraversal: true);
     _searchController = TextEditingController();
 
+    _checkGoogleSignInStatus();
     _settingsProvider.addListener(_onPreferencesChanged);
   }
 
@@ -116,6 +124,132 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _searchFocusNode.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _checkGoogleSignInStatus() async {
+    final signedIn = await SyncService.isSignedIn();
+    final prefs = await SharedPreferences.getInstance();
+    final lastSyncMillis = prefs.getInt('sync_service_last_sync_time') ?? 0;
+    
+    String syncTimeText = '';
+    if (lastSyncMillis > 0) {
+      final lastSyncDate = DateTime.fromMillisecondsSinceEpoch(lastSyncMillis);
+      syncTimeText = 'Last synced: ${lastSyncDate.toLocal().toString().split('.').first}';
+    } else {
+      syncTimeText = 'Never synced';
+    }
+
+    if (mounted) {
+      setState(() {
+        _isGoogleSignedIn = signedIn;
+        _syncTimeText = syncTimeText;
+      });
+    }
+  }
+
+  void _handleSync(BuildContext context) async {
+    if (_isSyncing) return;
+    
+    setState(() {
+      _isSyncing = true;
+    });
+
+    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+
+    try {
+      await SyncService.syncNotes(notesProvider, (local, remote) async {
+        if (!mounted) return null;
+        return await showDialog<Note?>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) {
+            final theme = Theme.of(dialogContext);
+            return AlertDialog(
+              title: Text('sync.conflict_title'.tr()),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text('sync.conflict_desc'.tr()),
+                    const SizedBox(height: 16.0),
+                    Card(
+                      child: InkWell(
+                        onTap: () => Navigator.pop(dialogContext, local),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('sync.local_version'.tr(), style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4),
+                              Text(local.title, style: theme.textTheme.titleMedium),
+                              const SizedBox(height: 4),
+                              Text(local.plainTextSnippet, maxLines: 3, overflow: TextOverflow.ellipsis),
+                              const SizedBox(height: 4),
+                              Text(local.date.toString()),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8.0),
+                    Card(
+                      child: InkWell(
+                        onTap: () => Navigator.pop(dialogContext, remote),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('sync.remote_version'.tr(), style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 4),
+                              Text(remote.title, style: theme.textTheme.titleMedium),
+                              const SizedBox(height: 4),
+                              Text(remote.plainTextSnippet, maxLines: 3, overflow: TextOverflow.ellipsis),
+                              const SizedBox(height: 4),
+                              Text(remote.date.toString()),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, null),
+                  child: Text('sync.cancel'.tr()),
+                ),
+              ],
+            );
+          },
+        );
+      });
+
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('sync.success'.tr()),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Sync error: $e');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('sync.failed'.tr(args: [e.toString()])),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isSyncing = false;
+      });
+      _checkGoogleSignInStatus();
+    }
   }
 
   void _handleExport(BuildContext context) async {
@@ -281,14 +415,49 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       onTap: () {
         FocusManager.instance.primaryFocus?.unfocus();
       },
-      child: ResponsiveBuilder(
-        builder: (context, layout) {
-          if (layout.isMobile) {
-            return _buildMobileLayout(context, layout);
-          } else {
-            return _buildDesktopLayout(context, layout);
-          }
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.keyN, control: true): () {
+            setState(() {
+              _selectedNoteId = null;
+              _isEditingRightPane = true;
+              if (_currentTab == 3) {
+                _currentTab = 0;
+              }
+            });
+          },
+          const SingleActivator(LogicalKeyboardKey.keyS, control: true): () {
+            if (_isGoogleSignedIn && !_isSyncing) {
+              _handleSync(context);
+            }
+          },
+          const SingleActivator(LogicalKeyboardKey.keyF, control: true): () {
+            _searchFocusNode.requestFocus();
+            setState(() {
+              _currentTab = 1;
+            });
+          },
+          const SingleActivator(LogicalKeyboardKey.escape): () {
+            if (_isEditingRightPane) {
+              setState(() {
+                _isEditingRightPane = false;
+              });
+            } else if (_selectedNoteId != null) {
+              setState(() {
+                _selectedNoteId = null;
+              });
+            }
+          },
         },
+        child: ResponsiveBuilder(
+          builder: (context, layout) {
+            if (layout.isMobile) {
+              return _buildMobileLayout(context, layout);
+            } else {
+              return _buildDesktopLayout(context, layout);
+            }
+          },
+        ),
       ),
     );
   }
@@ -1466,6 +1635,166 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 );
               },
+            ),
+
+            const SizedBox(height: 32.0),
+            Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
+            const SizedBox(height: 24.0),
+
+            // Google Drive Sync Section Header
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'sync.title'.tr().toUpperCase(),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.secondaryContainer,
+                  letterSpacing: 1.5,
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8.0),
+            Text(
+              'sync.desc'.tr(),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 20.0),
+
+            // Sync Settings UI
+            Card(
+              elevation: 0,
+              color: theme.colorScheme.surfaceContainerLow,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                side: BorderSide(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          _isGoogleSignedIn ? Icons.cloud_done_rounded : Icons.cloud_off_rounded,
+                          color: _isGoogleSignedIn ? Colors.green : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                        ),
+                        const SizedBox(width: 12.0),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _isGoogleSignedIn ? 'Status: Connected' : 'Status: Not Connected',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2.0),
+                              Text(
+                                _syncTimeText,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16.0),
+                    if (_isGoogleSignedIn)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.primaryContainer,
+                                foregroundColor: theme.colorScheme.onPrimaryContainer,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 14.0),
+                              ),
+                              icon: _isSyncing
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                                      ),
+                                    )
+                                  : const Icon(Icons.sync_rounded, size: 18.0),
+                              label: Text(
+                                _isSyncing ? 'sync.syncing'.tr() : 'sync.sync_button'.tr(),
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: theme.colorScheme.onPrimary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.0,
+                                ),
+                              ),
+                              onPressed: _isSyncing ? null : () => _handleSync(context),
+                            ),
+                          ),
+                          const SizedBox(width: 12.0),
+                          OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: theme.colorScheme.error,
+                              side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.4)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 16.0),
+                            ),
+                            onPressed: _isSyncing
+                                ? null
+                                : () async {
+                                    await SyncService.signOut();
+                                    _checkGoogleSignInStatus();
+                                  },
+                            child: Text(
+                              'sync.disconnect_button'.tr(),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.0),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primaryContainer,
+                          foregroundColor: theme.colorScheme.onPrimaryContainer,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 14.0),
+                        ),
+                        icon: const Icon(Icons.login_rounded, size: 18.0),
+                        label: Text(
+                          'sync.connect_button'.tr(),
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.onPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.0,
+                          ),
+                        ),
+                        onPressed: () async {
+                          final success = await SyncService.signIn();
+                          if (success) {
+                            _checkGoogleSignInStatus();
+                          }
+                        },
+                      ),
+                  ],
+                ),
+              ),
             ),
 
             const SizedBox(height: 32.0),
