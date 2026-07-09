@@ -55,6 +55,46 @@ class Note {
     return cleaned;
   }
 
+  // Strip Markdown formatting characters while preserving text layout, list items and code blocks
+  static String stripMarkdown(String text) {
+    if (text.isEmpty) return '';
+
+    String cleaned = text;
+
+    // 1. Replace asterisks used as list bullets at line starts with dashes,
+    // so they are not stripped as italic/bold emphasis markers.
+    cleaned = cleaned.replaceAll(RegExp(r'^\*\s+', multiLine: true), '- ');
+
+    // 2. Remove Image links: ![Alt text](url) -> Alt text (or empty)
+    cleaned = cleaned.replaceAll(RegExp(r'!\[[^\]]*\]\([^)]+\)'), '');
+
+    // 3. Simplify Links: [Link text](url) -> Link text (url)
+    cleaned = cleaned.replaceAllMapped(
+      RegExp(r'\[([^\]]+)\]\(([^)]+)\)'),
+      (match) => '${match.group(1)} (${match.group(2)})',
+    );
+
+    // 4. Remove headers: # Header -> Header
+    cleaned = cleaned.replaceAll(RegExp(r'^#+\s+', multiLine: true), '');
+
+    // 5. Remove blockquote markers: > Quote -> Quote
+    cleaned = cleaned.replaceAll(RegExp(r'^>\s+', multiLine: true), '');
+
+    // 6. Clean task list checkboxes: - [ ] Task / - [x] Task -> - Task
+    cleaned = cleaned.replaceAll(RegExp(r'^-\s+\[[ xX]\]\s+', multiLine: true), '- ');
+
+    // 7. Remove code block delimiters (e.g. ```dart or ```) along with trailing newlines, but preserve code content
+    cleaned = cleaned.replaceAll(RegExp(r'^```[a-zA-Z]*\s*\r?\n', multiLine: true), '');
+
+    // 8. Remove Bold/Italic/Strikethrough formatting markers: **bold**, _italic_, ~~strikethrough~~, `code`
+    cleaned = cleaned.replaceAll(RegExp(r'\*\*|__|\*|_|~~|`'), '');
+
+    // 9. Normalize multiple consecutive empty lines (more than 2 to just 2)
+    cleaned = cleaned.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+
+    return cleaned.trim();
+  }
+
   // Calculate word count dynamically
   int get wordCount {
     if (content.trim().isEmpty) return 0;

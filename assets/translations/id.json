@@ -206,8 +206,8 @@
   "backup_restore": {
     "title": "Cadangkan & Pulihkan",
     "desc": "Ekspor semua catatan Towi Anda ke arsip ZIP markdown, atau impor catatan dari file markdown.",
-    "export_button": "EKSPOR SEMUA CATATAN",
-    "import_button": "IMPOR CATATAN",
+    "export_button": "EKSPOR",
+    "import_button": "IMPOR",
     "export_success": "Catatan berhasil diekspor!",
     "import_success": "Berhasil mengimpor {} catatan!",
     "export_failed": "Ekspor gagal: {}",
@@ -215,7 +215,7 @@
     "no_notes_to_export": "Tidak ada catatan untuk diekspor.",
     "no_notes_imported": "Tidak ada catatan valid yang ditemukan untuk diimpor.",
     "save_backup_dialog_title": "Simpan Arsip Cadangan",
-    "restore_auto_button": "PULIHKAN DARI CADANGAN OTOMATIS",
+    "restore_auto_button": "PULIHKAN DARI CADANGAN",
     "confirm_restore_title": "Pulihkan Cadangan Otomatis",
     "confirm_restore_message": "Apakah Anda yakin ingin memulihkan catatan dari cadangan otomatis terakhir? Catatan yang ada akan digabungkan, dan catatan yang diubah akan diperbarui ke versi cadangan."
   },
@@ -266,15 +266,15 @@
     "title": "Sinkronisasi Google Drive",
     "desc": "Jaga agar catatan Anda tetap tersinkronisasi di semua perangkat dengan aman menggunakan folder Data Aplikasi Google Drive pribadi Anda.",
     "connect_button": "HUBUNGKAN GOOGLE DRIVE",
-    "disconnect_button": "PUTUSKAN SAMBUNGAN",
-    "sync_button": "SINKRONKAN SEKARANG",
+    "disconnect_button": "PUTUSKAN",
+    "sync_button": "SINKRONKAN",
     "syncing": "Menyinkronkan...",
-    "success": "Sinkronisasi berhasil diselesaikan!",
+    "success": "Sinkronisasi berhasil!",
     "failed": "Sinkronisasi gagal: {}",
-    "conflict_title": "Konflik Sinkronisasi Terdeteksi",
+    "conflict_title": "Ada Konflik Sinkronisasi",
     "conflict_desc": "Catatan ini telah diubah di perangkat lokal dan cloud sejak terakhir kali disinkronkan. Silakan pilih versi yang ingin Anda simpan:",
     "local_version": "VERSI LOKAL (Perangkat Ini)",
-    "remote_version": "VERSI CLOUD (Google Drive)",
+    "remote_version": "VERSI AWAN (Google Drive)",
     "cancel": "BATALKAN SINKRONISASI"
   }
 }

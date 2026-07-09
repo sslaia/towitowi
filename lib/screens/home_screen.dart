@@ -1083,11 +1083,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      headerText,
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontSize: 20.0,
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Text(
+                        headerText,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontSize: 20.0,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     Row(

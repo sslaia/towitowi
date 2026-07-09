@@ -57,7 +57,7 @@ class _DetailScreenState extends State<DetailScreen> {
   String? _shareSummary;
 
   // Selected tab for the preview card (0: Share, 1: Facebook, 2: Mastodon, 3: Bluesky, 4: Instagram)
-  int _selectedPreviewTab = 1;
+  int _selectedPreviewTab = -1;
 
   late final TextEditingController _postTextController;
 
@@ -295,7 +295,8 @@ class _DetailScreenState extends State<DetailScreen> {
   void _shareSystem() async {
     final String title = widget.note.title;
     final String dateStr = widget.note.formattedDate;
-    final String noteContent = _shareSummary ?? widget.note.content;
+    final String rawContent = _shareSummary ?? widget.note.content;
+    final String noteContent = Note.stripMarkdown(rawContent);
     final String footer = 'detail.share_footer'.tr();
     final String sharedText = '$title\n$dateStr\n\n$noteContent\n\n$footer';
 
@@ -668,6 +669,86 @@ class _DetailScreenState extends State<DetailScreen> {
     final aiService = Provider.of<AiContentService>(context, listen: false);
     final hasAiKey = aiService.hasAnyConfiguredKey(settingsProvider.geminiApiKey);
     final currentTab = _selectedPreviewTab;
+
+    if (currentTab == -1) {
+      return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header of Social Preview Card
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 12.0),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.auto_awesome,
+                    color: theme.colorScheme.primaryContainer,
+                    size: 20.0,
+                  ),
+                  const SizedBox(width: 8.0),
+                  Expanded(
+                    child: Text(
+                      'detail.social_preview'.tr(),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                        fontSize: 12.0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Custom Tab Bar for Platforms (Scrollable horizontally to prevent overflow)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildSocialTabButton(
+                      1,
+                      'assets/icon/facebook-icon.svg',
+                      theme,
+                    ),
+                    const SizedBox(width: 8.0),
+                    _buildSocialTabButton(
+                      2,
+                      'assets/icon/mastodon-icon.svg',
+                      theme,
+                    ),
+                    const SizedBox(width: 8.0),
+                    _buildSocialTabButton(
+                      3,
+                      'assets/icon/bluesky-icon.svg',
+                      theme,
+                    ),
+                    const SizedBox(width: 8.0),
+                    _buildSocialTabButton(
+                      4,
+                      'assets/icon/instagram-icon.svg',
+                      theme,
+                    ),
+                    const SizedBox(width: 8.0),
+                    _buildSocialTabButton(0, 'assets/icon/share-icon.svg', theme),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+          ],
+        ),
+      );
+    }
 
     final String title;
     final String? cachedSummary;
