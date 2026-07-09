@@ -11,6 +11,9 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
@@ -304,6 +307,146 @@ class _DetailScreenState extends State<DetailScreen> {
       sharedText,
       subject: title,
     );
+  }
+
+  List<pw.Widget> _parseContentToPdfWidgets(String content) {
+    final List<pw.Widget> widgets = [];
+    final lines = content.split('\n');
+
+    for (var line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) {
+        widgets.add(pw.SizedBox(height: 8));
+        continue;
+      }
+
+      // Headers
+      if (trimmed.startsWith('### ')) {
+        widgets.add(pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(vertical: 6),
+          child: pw.Text(
+            trimmed.substring(4),
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+          ),
+        ));
+      } else if (trimmed.startsWith('## ')) {
+        widgets.add(pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(vertical: 8),
+          child: pw.Text(
+            trimmed.substring(3),
+            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+          ),
+        ));
+      } else if (trimmed.startsWith('# ')) {
+        widgets.add(pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(vertical: 10),
+          child: pw.Text(
+            trimmed.substring(2),
+            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+          ),
+        ));
+      }
+      // Bullet points
+      else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+        widgets.add(pw.Padding(
+          padding: const pw.EdgeInsets.only(left: 12, bottom: 4),
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('• ', style: const pw.TextStyle(fontSize: 12)),
+              pw.Expanded(
+                child: pw.Text(
+                  trimmed.substring(2),
+                  style: const pw.TextStyle(fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ));
+      }
+      // Numbered lists
+      else if (RegExp(r'^\d+\.\s').hasMatch(trimmed)) {
+        final match = RegExp(r'^(\d+\.\s)').firstMatch(trimmed);
+        final prefix = match!.group(0)!;
+        widgets.add(pw.Padding(
+          padding: const pw.EdgeInsets.only(left: 12, bottom: 4),
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(prefix, style: const pw.TextStyle(fontSize: 12)),
+              pw.Expanded(
+                child: pw.Text(
+                  trimmed.substring(prefix.length),
+                  style: const pw.TextStyle(fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ));
+      }
+      // Blockquotes
+      else if (trimmed.startsWith('> ')) {
+        widgets.add(pw.Container(
+          decoration: const pw.BoxDecoration(
+            border: pw.Border(left: pw.BorderSide(color: PdfColors.grey400, width: 2)),
+          ),
+          padding: const pw.EdgeInsets.only(left: 8, top: 4, bottom: 4),
+          margin: const pw.EdgeInsets.symmetric(vertical: 6),
+          child: pw.Text(
+            trimmed.substring(2),
+            style: const pw.TextStyle(
+              fontSize: 12,
+              fontStyle: pw.FontStyle.italic,
+              color: PdfColors.grey700,
+            ),
+          ),
+        ));
+      }
+      // Normal Text
+      else {
+        widgets.add(pw.Paragraph(
+          text: trimmed,
+          style: const pw.TextStyle(fontSize: 12),
+          margin: const pw.EdgeInsets.only(bottom: 6),
+        ));
+      }
+    }
+
+    return widgets;
+  }
+
+  Future<Uint8List> _generatePdfDoc() async {
+    final pdf = pw.Document();
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        build: (pw.Context context) {
+          return [
+            pw.Text(
+              widget.note.title,
+              style: pw.TextStyle(
+                fontSize: 24,
+                fontWeight: pw.FontWeight.bold,
+              ),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              widget.note.formattedDate,
+              style: const pw.TextStyle(
+                fontSize: 10,
+                color: PdfColors.grey600,
+              ),
+            ),
+            pw.SizedBox(height: 10),
+            pw.Divider(color: PdfColors.grey300, thickness: 1),
+            pw.SizedBox(height: 15),
+            ..._parseContentToPdfWidgets(widget.note.content),
+          ];
+        },
+      ),
+    );
+    return pdf.save();
   }
 
   void _confirmDeleteNote() {
@@ -739,6 +882,12 @@ class _DetailScreenState extends State<DetailScreen> {
                       theme,
                     ),
                     const SizedBox(width: 8.0),
+                    _buildSocialTabButton(
+                      5,
+                      'assets/icon/pdf-icon.svg',
+                      theme,
+                    ),
+                    const SizedBox(width: 8.0),
                     _buildSocialTabButton(0, 'assets/icon/share-icon.svg', theme),
                   ],
                 ),
@@ -785,13 +934,20 @@ class _DetailScreenState extends State<DetailScreen> {
       maxChars = 300;
       platformIconPath = 'assets/icon/bluesky-icon.svg';
       accentColor = const Color(0xFF0085FF);
-    } else {
+    } else if (currentTab == 4) {
       title = 'detail.tab_instagram'.tr();
       cachedSummary = '';
       isGenerating = false;
       maxChars = 0;
       platformIconPath = 'assets/icon/instagram-icon.svg';
       accentColor = const Color(0xFFE1306C);
+    } else {
+      title = 'detail.tab_pdf'.tr();
+      cachedSummary = '';
+      isGenerating = false;
+      maxChars = 0;
+      platformIconPath = 'assets/icon/pdf-icon.svg';
+      accentColor = const Color(0xFFF44336);
     }
 
     return Container(
@@ -862,6 +1018,12 @@ class _DetailScreenState extends State<DetailScreen> {
                     theme,
                   ),
                   const SizedBox(width: 8.0),
+                  _buildSocialTabButton(
+                    5,
+                    'assets/icon/pdf-icon.svg',
+                    theme,
+                  ),
+                  const SizedBox(width: 8.0),
                   _buildSocialTabButton(0, 'assets/icon/share-icon.svg', theme),
                 ],
               ),
@@ -882,7 +1044,21 @@ class _DetailScreenState extends State<DetailScreen> {
                       noteTitle: widget.note.title,
                       noteContent: widget.note.content,
                     )
-                  : isGenerating
+                  : currentTab == 5
+                      ? SizedBox(
+                          key: ValueKey('pdf_${widget.note.id}'),
+                          height: 550.0,
+                          child: PdfPreview(
+                            build: (format) => _generatePdfDoc(),
+                            allowPrinting: true,
+                            allowSharing: true,
+                            canChangePageFormat: false,
+                            canChangeOrientation: false,
+                            canDebug: false,
+                            pdfFileName: '${widget.note.title.replaceAll(RegExp(r'[^\w\s-]'), '')}.pdf',
+                          ),
+                        )
+                      : isGenerating
                       ? Center(
                           key: ValueKey('loading_$currentTab'),
                           child: Padding(
