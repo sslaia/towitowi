@@ -31,12 +31,14 @@ void showGeminiSetupDialog(BuildContext context) {
             ),
           ],
         ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 400.0),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
                 'gemini_alert.message'.tr(),
                 style: TextStyle(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
@@ -124,7 +126,8 @@ void showGeminiSetupDialog(BuildContext context) {
             ],
           ),
         ),
-        actions: [
+      ),
+      actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
