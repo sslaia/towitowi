@@ -309,6 +309,85 @@ class _DetailScreenState extends State<DetailScreen> {
     );
   }
 
+  String _normalizeText(String text) {
+    return text
+        .replaceAll('“', '"')
+        .replaceAll('”', '"')
+        .replaceAll('‘', "'")
+        .replaceAll('’', "'")
+        .replaceAll('–', '-')
+        .replaceAll('—', '-')
+        .replaceAll('…', '...');
+  }
+
+  pw.InlineSpan _parseInlineMarkdown(String text, pw.TextStyle baseStyle) {
+    final String normalized = _normalizeText(text);
+    final List<pw.InlineSpan> spans = [];
+
+    // Pattern matches formatting markers: ***, ___, **, __, *, _, `
+    final regex = RegExp(r'(\*\*\*|___|\*\*|__|\*|_|`)');
+    final matches = regex.allMatches(normalized);
+
+    if (matches.isEmpty) {
+      return pw.TextSpan(text: normalized, style: baseStyle);
+    }
+
+    int currentIndex = 0;
+    bool isBold = false;
+    bool isItalic = false;
+    bool isCode = false;
+
+    pw.TextStyle getStyle() {
+      var style = baseStyle;
+      if (isCode) {
+        style = style.copyWith(
+          font: pw.Font.courier(),
+          color: PdfColors.red800,
+        );
+      } else {
+        if (isBold && isItalic) {
+          style = style.copyWith(
+            fontWeight: pw.FontWeight.bold,
+            fontStyle: pw.FontStyle.italic,
+          );
+        } else if (isBold) {
+          style = style.copyWith(fontWeight: pw.FontWeight.bold);
+        } else if (isItalic) {
+          style = style.copyWith(fontStyle: pw.FontStyle.italic);
+        }
+      }
+      return style;
+    }
+
+    for (final match in matches) {
+      if (match.start > currentIndex) {
+        final plainText = normalized.substring(currentIndex, match.start);
+        spans.add(pw.TextSpan(text: plainText, style: getStyle()));
+      }
+
+      final delimiter = match.group(0);
+      if (delimiter == '***' || delimiter == '___') {
+        isBold = !isBold;
+        isItalic = !isItalic;
+      } else if (delimiter == '**' || delimiter == '__') {
+        isBold = !isBold;
+      } else if (delimiter == '*' || delimiter == '_') {
+        isItalic = !isItalic;
+      } else if (delimiter == '`') {
+        isCode = !isCode;
+      }
+
+      currentIndex = match.end;
+    }
+
+    if (currentIndex < normalized.length) {
+      final plainText = normalized.substring(currentIndex);
+      spans.add(pw.TextSpan(text: plainText, style: getStyle()));
+    }
+
+    return pw.TextSpan(children: spans);
+  }
+
   List<pw.Widget> _parseContentToPdfWidgets(String content) {
     final List<pw.Widget> widgets = [];
     final lines = content.split('\n');
@@ -324,25 +403,31 @@ class _DetailScreenState extends State<DetailScreen> {
       if (trimmed.startsWith('### ')) {
         widgets.add(pw.Padding(
           padding: const pw.EdgeInsets.symmetric(vertical: 6),
-          child: pw.Text(
-            trimmed.substring(4),
-            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+          child: pw.RichText(
+            text: _parseInlineMarkdown(
+              trimmed.substring(4),
+              pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
           ),
         ));
       } else if (trimmed.startsWith('## ')) {
         widgets.add(pw.Padding(
           padding: const pw.EdgeInsets.symmetric(vertical: 8),
-          child: pw.Text(
-            trimmed.substring(3),
-            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+          child: pw.RichText(
+            text: _parseInlineMarkdown(
+              trimmed.substring(3),
+              pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+            ),
           ),
         ));
       } else if (trimmed.startsWith('# ')) {
         widgets.add(pw.Padding(
           padding: const pw.EdgeInsets.symmetric(vertical: 10),
-          child: pw.Text(
-            trimmed.substring(2),
-            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+          child: pw.RichText(
+            text: _parseInlineMarkdown(
+              trimmed.substring(2),
+              pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            ),
           ),
         ));
       }
@@ -355,9 +440,11 @@ class _DetailScreenState extends State<DetailScreen> {
             children: [
               pw.Text('• ', style: const pw.TextStyle(fontSize: 12)),
               pw.Expanded(
-                child: pw.Text(
-                  trimmed.substring(2),
-                  style: const pw.TextStyle(fontSize: 12),
+                child: pw.RichText(
+                  text: _parseInlineMarkdown(
+                    trimmed.substring(2),
+                    const pw.TextStyle(fontSize: 12),
+                  ),
                 ),
               ),
             ],
@@ -375,9 +462,11 @@ class _DetailScreenState extends State<DetailScreen> {
             children: [
               pw.Text(prefix, style: const pw.TextStyle(fontSize: 12)),
               pw.Expanded(
-                child: pw.Text(
-                  trimmed.substring(prefix.length),
-                  style: const pw.TextStyle(fontSize: 12),
+                child: pw.RichText(
+                  text: _parseInlineMarkdown(
+                    trimmed.substring(prefix.length),
+                    const pw.TextStyle(fontSize: 12),
+                  ),
                 ),
               ),
             ],
@@ -392,22 +481,25 @@ class _DetailScreenState extends State<DetailScreen> {
           ),
           padding: const pw.EdgeInsets.only(left: 8, top: 4, bottom: 4),
           margin: const pw.EdgeInsets.symmetric(vertical: 6),
-          child: pw.Text(
-            trimmed.substring(2),
-            style: const pw.TextStyle(
-              fontSize: 12,
-              fontStyle: pw.FontStyle.italic,
-              color: PdfColors.grey700,
+          child: pw.RichText(
+            text: _parseInlineMarkdown(
+              trimmed.substring(2),
+              const pw.TextStyle(
+                fontSize: 12,
+                fontStyle: pw.FontStyle.italic,
+                color: PdfColors.grey700,
+              ),
             ),
           ),
         ));
       }
       // Normal Text
       else {
-        widgets.add(pw.Paragraph(
-          text: trimmed,
-          style: const pw.TextStyle(fontSize: 12),
-          margin: const pw.EdgeInsets.only(bottom: 6),
+        widgets.add(pw.Padding(
+          padding: const pw.EdgeInsets.only(bottom: 6),
+          child: pw.RichText(
+            text: _parseInlineMarkdown(trimmed, const pw.TextStyle(fontSize: 12)),
+          ),
         ));
       }
     }
@@ -424,7 +516,7 @@ class _DetailScreenState extends State<DetailScreen> {
         build: (pw.Context context) {
           return [
             pw.Text(
-              widget.note.title,
+              _normalizeText(widget.note.title),
               style: pw.TextStyle(
                 fontSize: 24,
                 fontWeight: pw.FontWeight.bold,
