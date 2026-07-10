@@ -388,7 +388,7 @@ class _DetailScreenState extends State<DetailScreen> {
     return pw.TextSpan(children: spans);
   }
 
-  List<pw.Widget> _parseContentToPdfWidgets(String content) {
+  List<pw.Widget> _parseContentToPdfWidgets(String content, pw.TextStyle headerStyle) {
     final List<pw.Widget> widgets = [];
     final lines = content.split('\n');
 
@@ -406,7 +406,7 @@ class _DetailScreenState extends State<DetailScreen> {
           child: pw.RichText(
             text: _parseInlineMarkdown(
               trimmed.substring(4),
-              pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+              headerStyle.copyWith(fontSize: 14, fontWeight: pw.FontWeight.bold),
             ),
           ),
         ));
@@ -416,7 +416,7 @@ class _DetailScreenState extends State<DetailScreen> {
           child: pw.RichText(
             text: _parseInlineMarkdown(
               trimmed.substring(3),
-              pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
+              headerStyle.copyWith(fontSize: 16, fontWeight: pw.FontWeight.bold),
             ),
           ),
         ));
@@ -426,7 +426,7 @@ class _DetailScreenState extends State<DetailScreen> {
           child: pw.RichText(
             text: _parseInlineMarkdown(
               trimmed.substring(2),
-              pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+              headerStyle.copyWith(fontSize: 18, fontWeight: pw.FontWeight.bold),
             ),
           ),
         ));
@@ -508,7 +508,32 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<Uint8List> _generatePdfDoc() async {
-    final pdf = pw.Document();
+    final fontRegular = await PdfGoogleFonts.hankenGroteskRegular();
+    final fontBold = await PdfGoogleFonts.hankenGroteskBold();
+    final fontItalic = await PdfGoogleFonts.hankenGroteskItalic();
+    final fontBoldItalic = await PdfGoogleFonts.hankenGroteskBoldItalic();
+
+    final ebGaramondRegular = await PdfGoogleFonts.eBGaramondRegular();
+    final ebGaramondBold = await PdfGoogleFonts.eBGaramondBold();
+    final ebGaramondItalic = await PdfGoogleFonts.eBGaramondItalic();
+    final ebGaramondBoldItalic = await PdfGoogleFonts.eBGaramondBoldItalic();
+
+    final headerStyle = pw.TextStyle(
+      fontNormal: ebGaramondRegular,
+      fontBold: ebGaramondBold,
+      fontItalic: ebGaramondItalic,
+      fontBoldItalic: ebGaramondBoldItalic,
+    );
+
+    final pdf = pw.Document(
+      theme: pw.ThemeData.withFont(
+        base: fontRegular,
+        bold: fontBold,
+        italic: fontItalic,
+        boldItalic: fontBoldItalic,
+      ),
+    );
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -518,6 +543,7 @@ class _DetailScreenState extends State<DetailScreen> {
             pw.Text(
               _normalizeText(widget.note.title),
               style: pw.TextStyle(
+                font: ebGaramondBold,
                 fontSize: 24,
                 fontWeight: pw.FontWeight.bold,
               ),
@@ -533,7 +559,7 @@ class _DetailScreenState extends State<DetailScreen> {
             pw.SizedBox(height: 10),
             pw.Divider(color: PdfColors.grey300, thickness: 1),
             pw.SizedBox(height: 15),
-            ..._parseContentToPdfWidgets(widget.note.content),
+            ..._parseContentToPdfWidgets(widget.note.content, headerStyle),
           ];
         },
       ),
