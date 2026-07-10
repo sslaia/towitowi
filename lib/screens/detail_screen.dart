@@ -48,9 +48,15 @@ class _DetailScreenState extends State<DetailScreen> {
   bool _isSpeaking = false;
 
   // Cached AI social summaries
-  String? _blueskySummary;
-  String? _mastodonSummary;
-  String? _facebookSummary;
+  String? _blueskySummary = '';
+  String? _mastodonSummary = '';
+  String? _facebookSummary = '';
+
+  // Cached social titles
+  String? _shareTitle;
+  String? _facebookTitle;
+  String? _mastodonTitle;
+  String? _blueskyTitle;
 
   // Loading states
   bool _isGeneratingBluesky = false;
@@ -63,6 +69,7 @@ class _DetailScreenState extends State<DetailScreen> {
   int _selectedPreviewTab = -1;
 
   late final TextEditingController _postTextController;
+  late final TextEditingController _postTitleController;
 
   String _selectedFontFamily = 'Lora';
   final double _contentFontSize = 16.0; // Standard TextField size
@@ -82,6 +89,7 @@ class _DetailScreenState extends State<DetailScreen> {
     super.initState();
     _initTts();
     _postTextController = TextEditingController();
+    _postTitleController = TextEditingController();
     _updatePostTextController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -95,20 +103,28 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   void _updatePostTextController() {
-    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
-    final aiService = Provider.of<AiContentService>(context, listen: false);
-    final hasAiKey = aiService.hasAnyConfiguredKey(settingsProvider.geminiApiKey);
-
     if (_selectedPreviewTab == 0) {
       _postTextController.text = _shareSummary ?? widget.note.content;
     } else if (_selectedPreviewTab == 1) {
-      _postTextController.text = _facebookSummary ?? (hasAiKey ? '' : widget.note.content);
+      _postTextController.text = _facebookSummary ?? '';
     } else if (_selectedPreviewTab == 2) {
-      _postTextController.text = _mastodonSummary ?? (hasAiKey ? '' : widget.note.content);
+      _postTextController.text = _mastodonSummary ?? '';
     } else if (_selectedPreviewTab == 3) {
-      _postTextController.text = _blueskySummary ?? (hasAiKey ? '' : widget.note.content);
+      _postTextController.text = _blueskySummary ?? '';
     } else {
       _postTextController.text = '';
+    }
+
+    if (_selectedPreviewTab == 0) {
+      _postTitleController.text = _shareTitle ?? widget.note.title;
+    } else if (_selectedPreviewTab == 1) {
+      _postTitleController.text = _facebookTitle ?? widget.note.title;
+    } else if (_selectedPreviewTab == 2) {
+      _postTitleController.text = _mastodonTitle ?? widget.note.title;
+    } else if (_selectedPreviewTab == 3) {
+      _postTitleController.text = _blueskyTitle ?? widget.note.title;
+    } else {
+      _postTitleController.text = '';
     }
   }
 
@@ -142,6 +158,7 @@ class _DetailScreenState extends State<DetailScreen> {
   void dispose() {
     _flutterTts.stop();
     _postTextController.dispose();
+    _postTitleController.dispose();
     super.dispose();
   }
 
@@ -151,9 +168,13 @@ class _DetailScreenState extends State<DetailScreen> {
     if (oldWidget.note.content != widget.note.content ||
         oldWidget.note.title != widget.note.title) {
       _shareSummary = null;
-      _facebookSummary = null;
-      _mastodonSummary = null;
-      _blueskySummary = null;
+      _facebookSummary = '';
+      _mastodonSummary = '';
+      _blueskySummary = '';
+      _shareTitle = null;
+      _facebookTitle = null;
+      _mastodonTitle = null;
+      _blueskyTitle = null;
       _updatePostTextController();
     }
   }
@@ -395,10 +416,40 @@ class _DetailScreenState extends State<DetailScreen> {
     bool isInCodeBlock = false;
     final List<String> codeBlockLines = [];
 
+    bool isInBlockquote = false;
+    final List<String> blockquoteLines = [];
+
+    void flushBlockquote() {
+      if (blockquoteLines.isNotEmpty) {
+        widgets.add(pw.Container(
+          decoration: const pw.BoxDecoration(
+            border: pw.Border(left: pw.BorderSide(color: PdfColors.grey400, width: 2)),
+          ),
+          padding: const pw.EdgeInsets.only(left: 8, top: 4, bottom: 4),
+          margin: const pw.EdgeInsets.symmetric(vertical: 6),
+          child: pw.RichText(
+            text: _parseInlineMarkdown(
+              blockquoteLines.join('\n'),
+              const pw.TextStyle(
+                fontSize: 12,
+                fontStyle: pw.FontStyle.italic,
+                color: PdfColors.grey700,
+              ),
+            ),
+          ),
+        ));
+        blockquoteLines.clear();
+      }
+      isInBlockquote = false;
+    }
+
     for (var line in lines) {
       final trimmed = line.trim();
 
       if (trimmed.startsWith('```')) {
+        if (isInBlockquote) {
+          flushBlockquote();
+        }
         if (isInCodeBlock) {
           // Exiting code block
           widgets.add(pw.Container(
@@ -430,6 +481,22 @@ class _DetailScreenState extends State<DetailScreen> {
       if (isInCodeBlock) {
         codeBlockLines.add(line);
         continue;
+      }
+
+      if (trimmed.startsWith('>')) {
+        isInBlockquote = true;
+        String quoteText = '';
+        if (trimmed.startsWith('> ')) {
+          quoteText = trimmed.substring(2);
+        } else {
+          quoteText = trimmed.substring(1);
+        }
+        blockquoteLines.add(quoteText);
+        continue;
+      } else {
+        if (isInBlockquote) {
+          flushBlockquote();
+        }
       }
 
       if (trimmed.isEmpty) {
@@ -511,26 +578,6 @@ class _DetailScreenState extends State<DetailScreen> {
           ),
         ));
       }
-      // Blockquotes
-      else if (trimmed.startsWith('> ')) {
-        widgets.add(pw.Container(
-          decoration: const pw.BoxDecoration(
-            border: pw.Border(left: pw.BorderSide(color: PdfColors.grey400, width: 2)),
-          ),
-          padding: const pw.EdgeInsets.only(left: 8, top: 4, bottom: 4),
-          margin: const pw.EdgeInsets.symmetric(vertical: 6),
-          child: pw.RichText(
-            text: _parseInlineMarkdown(
-              trimmed.substring(2),
-              const pw.TextStyle(
-                fontSize: 12,
-                fontStyle: pw.FontStyle.italic,
-                color: PdfColors.grey700,
-              ),
-            ),
-          ),
-        ));
-      }
       // Normal Text
       else {
         widgets.add(pw.Padding(
@@ -561,6 +608,11 @@ class _DetailScreenState extends State<DetailScreen> {
           ),
         ),
       ));
+    }
+
+    // Handle unclosed blockquotes gracefully
+    if (isInBlockquote && blockquoteLines.isNotEmpty) {
+      flushBlockquote();
     }
 
     return widgets;
@@ -1092,21 +1144,21 @@ class _DetailScreenState extends State<DetailScreen> {
       accentColor = const Color(0xFFFFE16D);
     } else if (currentTab == 1) {
       title = 'detail.tab_facebook'.tr();
-      cachedSummary = _facebookSummary ?? (hasAiKey ? null : widget.note.content);
+      cachedSummary = _facebookSummary ?? '';
       isGenerating = _isGeneratingFacebook;
       maxChars = 300;
       platformIconPath = 'assets/icon/facebook-icon.svg';
       accentColor = const Color(0xFF0866FF);
     } else if (currentTab == 2) {
       title = 'detail.tab_mastodon'.tr();
-      cachedSummary = _mastodonSummary ?? (hasAiKey ? null : widget.note.content);
+      cachedSummary = _mastodonSummary ?? '';
       isGenerating = _isGeneratingMastodon;
       maxChars = 500;
       platformIconPath = 'assets/icon/mastodon-icon.svg';
       accentColor = const Color(0xFF6364FF);
     } else if (currentTab == 3) {
       title = 'detail.tab_bluesky'.tr();
-      cachedSummary = _blueskySummary ?? (hasAiKey ? null : widget.note.content);
+      cachedSummary = _blueskySummary ?? '';
       isGenerating = _isGeneratingBluesky;
       maxChars = 300;
       platformIconPath = 'assets/icon/bluesky-icon.svg';
@@ -1259,44 +1311,10 @@ class _DetailScreenState extends State<DetailScreen> {
                             ),
                           ),
                         )
-                      : cachedSummary == null
-                          ? Center(
-                              key: ValueKey('empty_$currentTab'),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 24.0),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      'detail.no_preview'.tr(args: [title]),
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        color: theme.colorScheme.onSurface.withValues(
-                                          alpha: 0.5,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16.0),
-                                    ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor:
-                                            theme.colorScheme.primaryContainer,
-                                        foregroundColor:
-                                            theme.colorScheme.onPrimaryContainer,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8.0),
-                                        ),
-                                      ),
-                                      icon: const Icon(Icons.auto_awesome, size: 16.0),
-                                      label: Text('detail.generate_post'.tr(args: [title])),
-                                      onPressed: () => _generatePreview(currentTab),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : Column(
-                              key: ValueKey('content_$currentTab'),
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
+                      : Column(
+                          key: ValueKey('content_$currentTab'),
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                                 if (currentTab != 0) ...[
                                   // Visual card preview container (FittedBox fits 1080w dynamic h cleanly on screen)
                                   Center(
@@ -1576,6 +1594,65 @@ class _DetailScreenState extends State<DetailScreen> {
                                   ],
 
                                 // Render the generated post editor
+                                Text(
+                                  'detail.post_title_label'.tr(),
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 8.0),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16.0),
+                                  decoration: BoxDecoration(
+                                    color: theme.brightness == Brightness.dark
+                                        ? Colors.black38
+                                        : theme.colorScheme.surface,
+                                    borderRadius: BorderRadius.circular(12.0),
+                                    border: Border.all(
+                                      color: accentColor.withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                  child: TextField(
+                                    controller: _postTitleController,
+                                    maxLines: 1,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16.0,
+                                    ),
+                                    cursorColor: theme.colorScheme.primaryContainer,
+                                    decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                      hintText: 'edit.enter_title'.tr(),
+                                    ),
+                                    onChanged: (val) {
+                                      setState(() {
+                                        if (currentTab == 0) {
+                                          _shareTitle = val;
+                                        } else if (currentTab == 1) {
+                                          _facebookTitle = val;
+                                        } else if (currentTab == 2) {
+                                          _mastodonTitle = val;
+                                        } else if (currentTab == 3) {
+                                          _blueskyTitle = val;
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(height: 16.0),
+
+                                Text(
+                                  'detail.post_body_label'.tr(),
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                                const SizedBox(height: 8.0),
                                 Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(16.0),
@@ -1625,6 +1702,80 @@ class _DetailScreenState extends State<DetailScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 16.0),
+                                if (currentTab == 1 || currentTab == 2 || currentTab == 3) ...[
+                                   LayoutBuilder(
+                                     builder: (context, constraints) {
+                                       final useVertical = constraints.maxWidth < 450;
+
+                                       final generateButton = ElevatedButton.icon(
+                                         style: ElevatedButton.styleFrom(
+                                           backgroundColor: theme.colorScheme.primaryContainer,
+                                           foregroundColor: theme.colorScheme.onPrimaryContainer,
+                                           padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                           shape: RoundedRectangleBorder(
+                                             borderRadius: BorderRadius.circular(8.0),
+                                           ),
+                                         ),
+                                         icon: const Icon(Icons.auto_awesome, size: 16.0),
+                                         label: Text(
+                                           'detail.generate_with_ai'.tr(),
+                                           textAlign: TextAlign.center,
+                                         ),
+                                         onPressed: () => _generatePreview(currentTab),
+                                       );
+
+                                       final insertButton = OutlinedButton.icon(
+                                         style: OutlinedButton.styleFrom(
+                                           foregroundColor: theme.colorScheme.onSurface,
+                                           side: BorderSide(
+                                             color: theme.colorScheme.outlineVariant,
+                                           ),
+                                           padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                           shape: RoundedRectangleBorder(
+                                             borderRadius: BorderRadius.circular(8.0),
+                                           ),
+                                         ),
+                                         icon: const Icon(Icons.input_rounded, size: 16.0),
+                                         label: Text(
+                                           'detail.insert_note'.tr(),
+                                           textAlign: TextAlign.center,
+                                         ),
+                                         onPressed: () {
+                                           setState(() {
+                                             if (currentTab == 1) {
+                                               _facebookSummary = widget.note.content;
+                                             } else if (currentTab == 2) {
+                                               _mastodonSummary = widget.note.content;
+                                             } else if (currentTab == 3) {
+                                               _blueskySummary = widget.note.content;
+                                             }
+                                             _updatePostTextController();
+                                           });
+                                         },
+                                       );
+
+                                       if (useVertical) {
+                                         return Column(
+                                           crossAxisAlignment: CrossAxisAlignment.stretch,
+                                           children: [
+                                             generateButton,
+                                             const SizedBox(height: 12.0),
+                                             insertButton,
+                                           ],
+                                         );
+                                       } else {
+                                         return Row(
+                                           children: [
+                                             Expanded(child: generateButton),
+                                             const SizedBox(width: 12.0),
+                                             Expanded(child: insertButton),
+                                           ],
+                                         );
+                                       }
+                                     },
+                                   ),
+                                   const SizedBox(height: 16.0),
+                                 ],
 
                                 // Stats & Action buttons row
                                 Row(
@@ -1813,7 +1964,7 @@ class _DetailScreenState extends State<DetailScreen> {
           children: [
             // Slide Title Header
             Text(
-              widget.note.title.toUpperCase(),
+              _postTitleController.text.toUpperCase(),
               textAlign: _selectedTextAlign,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,

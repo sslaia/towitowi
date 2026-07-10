@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../database/database.dart';
 import '../models/note.dart';
 
@@ -10,6 +10,11 @@ class LegacyMigrationService {
   /// to the new Drift database if present.
   static Future<void> migrateIfNeeded(AppDatabase targetDb) async {
     if (kIsWeb) return;
+
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    }
 
     try {
       final dbPath = await getDatabasesPath();

@@ -61,16 +61,29 @@ class SettingsProvider with ChangeNotifier {
         _bookmarkedIds = bookmarks.toSet();
       }
       
-      // Read securely
-      String? savedApiKey = await _secureStorage.read(key: _geminiApiKeyKey);
+      // Read securely with a timeout to prevent hanging on Linux if Keyring is locked/headless
+      String? savedApiKey;
+      try {
+        savedApiKey = await _secureStorage
+            .read(key: _geminiApiKeyKey)
+            .timeout(const Duration(seconds: 1));
+      } catch (e) {
+        debugPrint('Secure storage read timed out or failed: $e');
+      }
       
       // Migration from insecure legacy SharedPreferences if needed
       if (savedApiKey == null || savedApiKey.trim().isEmpty) {
         final legacyKey = prefs.getString(_legacyGeminiApiKeyKey);
         if (legacyKey != null && legacyKey.trim().isNotEmpty) {
           savedApiKey = legacyKey;
-          await _secureStorage.write(key: _geminiApiKeyKey, value: legacyKey);
-          await prefs.remove(_legacyGeminiApiKeyKey);
+          try {
+            await _secureStorage
+                .write(key: _geminiApiKeyKey, value: legacyKey)
+                .timeout(const Duration(seconds: 1));
+            await prefs.remove(_legacyGeminiApiKeyKey);
+          } catch (e) {
+            debugPrint('Secure storage write migration timed out or failed: $e');
+          }
         }
       }
       
@@ -162,12 +175,16 @@ class SettingsProvider with ChangeNotifier {
 
     try {
       if (key.trim().isEmpty) {
-        await _secureStorage.delete(key: _geminiApiKeyKey);
+        await _secureStorage
+            .delete(key: _geminiApiKeyKey)
+            .timeout(const Duration(seconds: 1));
       } else {
-        await _secureStorage.write(key: _geminiApiKeyKey, value: key);
+        await _secureStorage
+            .write(key: _geminiApiKeyKey, value: key)
+            .timeout(const Duration(seconds: 1));
       }
     } catch (e) {
-      debugPrint('Error saving Gemini API Key securely: $e');
+      debugPrint('Error saving Gemini API Key securely (timed out or failed): $e');
     }
   }
 
