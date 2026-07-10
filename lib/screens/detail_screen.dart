@@ -392,8 +392,46 @@ class _DetailScreenState extends State<DetailScreen> {
     final List<pw.Widget> widgets = [];
     final lines = content.split('\n');
 
+    bool isInCodeBlock = false;
+    final List<String> codeBlockLines = [];
+
     for (var line in lines) {
       final trimmed = line.trim();
+
+      if (trimmed.startsWith('```')) {
+        if (isInCodeBlock) {
+          // Exiting code block
+          widgets.add(pw.Container(
+            width: double.infinity,
+            decoration: const pw.BoxDecoration(
+              color: PdfColors.grey100,
+              borderRadius: pw.BorderRadius.all(pw.Radius.circular(4)),
+            ),
+            padding: const pw.EdgeInsets.all(8),
+            margin: const pw.EdgeInsets.symmetric(vertical: 6),
+            child: pw.Text(
+              codeBlockLines.join('\n'),
+              style: pw.TextStyle(
+                font: pw.Font.courier(),
+                fontSize: 10,
+                color: PdfColors.grey900,
+              ),
+            ),
+          ));
+          codeBlockLines.clear();
+          isInCodeBlock = false;
+        } else {
+          // Entering code block
+          isInCodeBlock = true;
+        }
+        continue;
+      }
+
+      if (isInCodeBlock) {
+        codeBlockLines.add(line);
+        continue;
+      }
+
       if (trimmed.isEmpty) {
         widgets.add(pw.SizedBox(height: 8));
         continue;
@@ -502,6 +540,27 @@ class _DetailScreenState extends State<DetailScreen> {
           ),
         ));
       }
+    }
+
+    // Handle unclosed code blocks gracefully
+    if (isInCodeBlock && codeBlockLines.isNotEmpty) {
+      widgets.add(pw.Container(
+        width: double.infinity,
+        decoration: const pw.BoxDecoration(
+          color: PdfColors.grey100,
+          borderRadius: pw.BorderRadius.all(pw.Radius.circular(4)),
+        ),
+        padding: const pw.EdgeInsets.all(8),
+        margin: const pw.EdgeInsets.symmetric(vertical: 6),
+        child: pw.Text(
+          codeBlockLines.join('\n'),
+          style: pw.TextStyle(
+            font: pw.Font.courier(),
+            fontSize: 10,
+            color: PdfColors.grey900,
+          ),
+        ),
+      ));
     }
 
     return widgets;
