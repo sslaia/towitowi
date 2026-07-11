@@ -71,8 +71,8 @@ flutter:
 
 msix_config:
   display_name: TowiTowi
-  publisher_display_name: sslaia
-  publisher: "CN=sslaia, O=sslaia, C=GB"
+  publisher_display_name: Sirus Laia
+  publisher: "CN=Sirus Laia, O=Sirus Laia, C=GB"
   identity_name: io.github.sslaia.towitowi
   logo_path: assets/icon/desktop_app_icon.png
   capabilities: internetClient
