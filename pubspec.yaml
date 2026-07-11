@@ -70,9 +70,11 @@ flutter:
     - assets/images/
 
 msix_config:
-  display_name: TowiTowi
+  display_name: TowiTowi Notes # TODO: Replace with the exact display name you reserved in Partner Center if it is different (e.g. "TowiTowi Notes" or "TowiTowiNotes")
   publisher_display_name: Sirus Laia
-  publisher: "CN=Sirus Laia, O=Sirus Laia, C=GB"
-  identity_name: io.github.sslaia.towitowi
+  publisher: "CN=A78B8E54-8BEA-4FA1-9999-D1F94CB7B4BB"
+  identity_name: SirusLaia.TowiTowiNotes
   logo_path: assets/icon/desktop_app_icon.png
   capabilities: internetClient
+  store: true
+
