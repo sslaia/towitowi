@@ -49,14 +49,18 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/icon/app_icon.png"
-  adaptive_icon_background: "assets/icon/ic_launcher_background.png"
-  adaptive_icon_foreground: "assets/icon/ic_launcher_foreground.png"
   web:
     generate: true
     image_path: "assets/icon/app_icon.png"
   macos:
     generate: true
     image_path: "assets/icon/app_icon.png"
+  windows:
+    generate: true
+    image_path: "assets/icon/desktop_app_icon.png"
+  linux:
+    generate: true
+    image_path: "assets/icon/desktop_app_icon.png"
 
 flutter:
   uses-material-design: true

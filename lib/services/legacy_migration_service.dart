@@ -9,9 +9,9 @@ class LegacyMigrationService {
   /// Checks for the presence of the old sqflite database and migrates its data
   /// to the new Drift database if present.
   static Future<void> migrateIfNeeded(AppDatabase targetDb) async {
-    if (kIsWeb) return;
+    if (kIsWeb || Platform.isWindows || Platform.isLinux) return;
 
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    if (Platform.isMacOS) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
