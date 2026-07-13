@@ -12,7 +12,13 @@ A note-taking app designed to bridge the gap between your analog thoughts and th
 - Share to social media (Facebook, Mastodon, Bluesky, etc)
 
 
-## Version
+## Version history
+
+Version 0.1.2+3
+- Migrated database from sqlite to Drift
+- Implemented Google Drive backup
+- Syncing notes manually between Android and desktop using Drive synchronization
+- Finalised the Linux and Windows version of the app 
 
 Version 0.1.1:
 - New light mode
