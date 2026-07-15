@@ -1437,51 +1437,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Language Selector Section Header
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'account.select_language'.tr().toUpperCase(),
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.secondaryContainer,
-                  letterSpacing: 1.5,
-                  fontSize: 12.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-
-            // Language Selection Buttons
-            Row(
-              children: [
-                // English Card
-                Expanded(
-                  child: _buildLanguageCard(
-                    context,
-                    label: 'account.english'.tr(),
-                    localeCode: 'en',
-                    isActive: currentLocale.languageCode == 'en',
-                    theme: theme,
-                  ),
-                ),
-                const SizedBox(width: 16.0),
-                // Indonesian Card
-                Expanded(
-                  child: _buildLanguageCard(
-                    context,
-                    label: 'account.indonesian'.tr(),
-                    localeCode: 'id',
-                    isActive: currentLocale.languageCode == 'id',
-                    theme: theme,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32.0),
-            Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
-            const SizedBox(height: 24.0),
-
             // Theme Selector Section Header
             Align(
               alignment: Alignment.centerLeft,
@@ -1833,6 +1788,51 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
 
+            const SizedBox(height: 32.0),
+            Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
+            const SizedBox(height: 24.0),
+
+            // Language Selector Section Header
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'account.select_language'.tr().toUpperCase(),
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.secondaryContainer,
+                  letterSpacing: 1.5,
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16.0),
+
+            // Language Selection Buttons
+            Row(
+              children: [
+                // English Card
+                Expanded(
+                  child: _buildLanguageCard(
+                    context,
+                    label: 'account.english'.tr(),
+                    localeCode: 'en',
+                    isActive: currentLocale.languageCode == 'en',
+                    theme: theme,
+                  ),
+                ),
+                const SizedBox(width: 16.0),
+                // Indonesian Card
+                Expanded(
+                  child: _buildLanguageCard(
+                    context,
+                    label: 'account.indonesian'.tr(),
+                    localeCode: 'id',
+                    isActive: currentLocale.languageCode == 'id',
+                    theme: theme,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 32.0),
             Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2)),
             const SizedBox(height: 24.0),

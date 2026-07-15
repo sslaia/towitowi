@@ -209,8 +209,8 @@
     "failed_to_open_guide": "Failed to open guide: {}"
   },
   "backup_restore": {
-    "title": "Backup & Restore",
-    "desc": "Export all your Towi notes to a markdown ZIP archive, or import notes from markdown files.",
+    "title": "Local Backup & Restore",
+    "desc": "Export all your Towi notes to a markdown ZIP archive on local storage, or import notes from markdown files",
     "export_button": "EXPORT ALL NOTES",
     "import_button": "IMPORT NOTES",
     "export_success": "Notes exported successfully!",
@@ -273,7 +273,7 @@
     "close": "Close"
   },
   "sync": {
-    "title": "Google Drive Synchronization",
+    "title": "Online Google Drive Synchronization",
     "desc": "Keep your notes synchronized across all your devices securely using your private Google Drive App Data folder.",
     "connect_button": "CONNECT GOOGLE DRIVE",
     "disconnect_button": "DISCONNECT",

@@ -209,8 +209,8 @@
     "failed_to_open_guide": "Gagal membuka panduan: {}"
   },
   "backup_restore": {
-    "title": "Cadangkan & Pulihkan",
-    "desc": "Ekspor semua catatan Towi Anda ke arsip ZIP markdown, atau impor catatan dari file markdown.",
+    "title": "Pencadangan & Pemulihan Lokal",
+    "desc": "Ekspor semua catatan Towi Anda ke arsip ZIP markdown di penyimpanan lokal, atau impor catatan dari file markdown",
     "export_button": "EKSPOR",
     "import_button": "IMPOR",
     "export_success": "Catatan berhasil diekspor!",
@@ -273,7 +273,7 @@
     "close": "Tutup"
   },
   "sync": {
-    "title": "Sinkronisasi Google Drive",
+    "title": "Sinkronisasi Google Drive Online",
     "desc": "Jaga agar catatan Anda tetap tersinkronisasi di semua perangkat dengan aman menggunakan folder Data Aplikasi Google Drive pribadi Anda.",
     "connect_button": "HUBUNGKAN GOOGLE DRIVE",
     "disconnect_button": "PUTUSKAN",
