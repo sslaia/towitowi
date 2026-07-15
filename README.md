@@ -4,6 +4,8 @@ A simple note taking app in the age of AI.
 
 A note-taking app designed to bridge the gap between your analog thoughts and the digital world. In an age where AI can write for us, TowiTowi helps you preserve your authentic voice while leveraging artificial intelligence for enhancement, not replacement.
 
+Get it from Google Play Store and setup your own Gemini AI key. See the guide at: [TowiTowi](https://sslaia.github.io/towitowi/)
+
 ## Features
 
 - Take notes

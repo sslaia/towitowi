@@ -8,6 +8,7 @@ import '../services/ai_content_service.dart';
 import '../widgets/responsive_builder.dart';
 import '../widgets/top_bar.dart';
 import '../widgets/gemini_setup_dialog.dart';
+import '../widgets/report_ai_dialog.dart';
 
 class EditScreen extends StatefulWidget {
   final Note? note;
@@ -1125,6 +1126,22 @@ class _GeminiRestructureSheetState extends State<GeminiRestructureSheet> {
                   tooltip: 'edit.restructure_refresh_tooltip'.tr(),
                   color: theme.colorScheme.primaryContainer,
                   onPressed: _generateRestructured,
+                ),
+              if (!_isLoading && _restructuredText != null)
+                IconButton(
+                  icon: const Icon(Icons.report_problem_outlined),
+                  tooltip: 'about.report_ai_issue'.tr(),
+                  color: theme.colorScheme.error,
+                  onPressed: () {
+                    final currentText = _controllers.isNotEmpty && _selectedVersionIndex < _controllers.length
+                        ? _controllers[_selectedVersionIndex].text
+                        : _restructuredText;
+                    showReportAiDialog(
+                      context,
+                      prompt: widget.rawThoughts,
+                      output: currentText,
+                    );
+                  },
                 ),
             ],
           ),

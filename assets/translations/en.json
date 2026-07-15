@@ -230,7 +230,12 @@
     "description": "TowiTowi is a note-taking application inspired by the Towitowi bird of Nias (Orthotomus ruficeps baeus). According to local lore, when the Towitowi bird chirps, it brings good news. We hope that writing and sharing your Towi notes brings happiness and good news to you and your community.",
     "view_licenses": "View Licenses",
     "gemini_guide_button": "Gemini Setup Guide",
-    "copyright": "© 2026 io.github.sslaia.towitowi"
+    "copyright": "© 2026 io.github.sslaia.towitowi",
+    "report_ai_issue": "Report AI Output",
+    "report_dialog_title": "Report AI Content",
+    "report_dialog_message": "TowiTowi processes user input through AI and generates output using your own Google Gemini API key. If you encounter any inappropriate or problematic output, you can report it to Google's legal team or notify the developer to adjust safety instructions.",
+    "report_to_google": "Report to Google",
+    "report_to_developer": "Report to Developer"
   },
   "filter": {
     "title": "Filter",

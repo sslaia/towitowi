@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../widgets/top_bar.dart';
+import '../widgets/report_ai_dialog.dart';
 import 'onboarding_screen.dart';
 import 'guide_screen.dart';
 
@@ -205,7 +206,6 @@ class AboutScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16.0),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       foregroundColor: theme.colorScheme.primaryContainer,
@@ -237,6 +237,38 @@ class AboutScreen extends StatelessWidget {
                       style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: theme.colorScheme.error,
+                      side: BorderSide(
+                        color: theme.colorScheme.error.withValues(
+                          alpha: 0.5,
+                        ),
+                        width: 1.5,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 12.0,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                    ),
+                    onPressed: () {
+                      showReportAiDialog(context);
+                    },
+                    icon: const Icon(Icons.report_problem_outlined, size: 18.0),
+                    label: Text(
+                      'about.report_ai_issue'.tr().toUpperCase(),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
+                        color: theme.colorScheme.error,
                       ),
                     ),
                   ),
