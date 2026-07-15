@@ -62,7 +62,38 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _searchController = TextEditingController();
 
     _checkGoogleSignInStatus();
+    _checkAndTriggerSilentSync();
     _settingsProvider.addListener(_onPreferencesChanged);
+  }
+
+  Future<void> _checkAndTriggerSilentSync() async {
+    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+    final signedIn = await SyncService.isSignedIn();
+    if (!signedIn) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final lastSyncMillis = prefs.getInt('sync_service_last_sync_time') ?? 0;
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    // Trigger silent sync if last sync was > 12 hours ago
+    if (now - lastSyncMillis > 12 * 60 * 60 * 1000) {
+      debugPrint('Triggering automatic silent sync on app startup...');
+      try {
+        await SyncService.syncNotes(
+          notesProvider,
+          (local, remote) async {
+            // Background conflict resolver: safely postpone conflict resolution
+            debugPrint('Conflict detected in silent sync. Postponing.');
+            return null;
+          },
+          settingsProvider: _settingsProvider,
+        );
+        debugPrint('Silent startup sync completed successfully.');
+        _checkGoogleSignInStatus(); // Refresh sync time status UI
+      } catch (e) {
+        debugPrint('Silent startup sync finished or postponed: $e');
+      }
+    }
   }
 
   @override
@@ -155,6 +186,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
 
     final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+    final settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
 
     try {
       await SyncService.syncNotes(notesProvider, (local, remote) async {
@@ -226,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             );
           },
         );
-      });
+      }, settingsProvider: settingsProvider);
 
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

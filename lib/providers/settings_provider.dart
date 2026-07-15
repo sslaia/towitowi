@@ -16,6 +16,7 @@ class SettingsProvider with ChangeNotifier {
   static const String _writingStyleInstructionIdKey = 'settings_writing_style_instruction_id';
   static const String _writingStyleSamplesEnKey = 'settings_writing_style_samples_en';
   static const String _writingStyleSamplesIdKey = 'settings_writing_style_samples_id';
+  static const String _settingsUpdatedAtKey = 'settings_updated_at';
 
   static const _secureStorage = FlutterSecureStorage();
 
@@ -26,6 +27,7 @@ class SettingsProvider with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   bool _showGeminiSetupAlert = true;
   int _geminiSetupAlertNextShowTime = 0;
+  int _settingsUpdatedAt = 0;
 
   String _writingStyleInstructionEn = '';
   String _writingStyleInstructionId = '';
@@ -43,6 +45,7 @@ class SettingsProvider with ChangeNotifier {
   ThemeMode get themeMode => _themeMode;
   bool get showGeminiSetupAlert => _showGeminiSetupAlert;
   int get geminiSetupAlertNextShowTime => _geminiSetupAlertNextShowTime;
+  int get settingsUpdatedAt => _settingsUpdatedAt;
 
   bool get shouldShowGeminiSetupAlert {
     if (!_showGeminiSetupAlert) return false;
@@ -108,6 +111,7 @@ class SettingsProvider with ChangeNotifier {
       }
       _showGeminiSetupAlert = prefs.getBool(_showGeminiSetupAlertKey) ?? true;
       _geminiSetupAlertNextShowTime = prefs.getInt(_geminiSetupAlertNextShowTimeKey) ?? 0;
+      _settingsUpdatedAt = prefs.getInt(_settingsUpdatedAtKey) ?? 0;
     } catch (e) {
       debugPrint('Error loading preferences: $e');
     } finally {
@@ -183,6 +187,7 @@ class SettingsProvider with ChangeNotifier {
             .write(key: _geminiApiKeyKey, value: key)
             .timeout(const Duration(seconds: 1));
       }
+      await _updateSettingsTimestamp();
     } catch (e) {
       debugPrint('Error saving Gemini API Key securely (timed out or failed): $e');
     }
@@ -217,6 +222,7 @@ class SettingsProvider with ChangeNotifier {
       } else {
         await prefs.setString(_writingStyleInstructionEnKey, instruction);
       }
+      await _updateSettingsTimestamp();
     } catch (e) {
       debugPrint('Error saving writing style instruction: $e');
     }
@@ -237,6 +243,7 @@ class SettingsProvider with ChangeNotifier {
       } else {
         await prefs.setStringList(_writingStyleSamplesEnKey, samples);
       }
+      await _updateSettingsTimestamp();
     } catch (e) {
       debugPrint('Error saving writing style samples: $e');
     }
@@ -262,6 +269,50 @@ class SettingsProvider with ChangeNotifier {
       await prefs.setInt(_geminiSetupAlertNextShowTimeKey, nextTime);
     } catch (e) {
       debugPrint('Error saving snooze Gemini alert preference: $e');
+    }
+  }
+
+  Future<void> _updateSettingsTimestamp() async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    _settingsUpdatedAt = now;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_settingsUpdatedAtKey, now);
+    } catch (e) {
+      debugPrint('Error saving settings updated timestamp: $e');
+    }
+  }
+
+  Future<void> updateSettingsFromSync({
+    required String geminiApiKey,
+    required String writingStyleInstructionEn,
+    required String writingStyleInstructionId,
+    required List<String> writingStyleSamplesEn,
+    required List<String> writingStyleSamplesId,
+    required int updatedAt,
+  }) async {
+    _geminiApiKey = geminiApiKey;
+    _writingStyleInstructionEn = writingStyleInstructionEn;
+    _writingStyleInstructionId = writingStyleInstructionId;
+    _writingStyleSamplesEn = List.from(writingStyleSamplesEn);
+    _writingStyleSamplesId = List.from(writingStyleSamplesId);
+    _settingsUpdatedAt = updatedAt;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (geminiApiKey.trim().isEmpty) {
+        await _secureStorage.delete(key: _geminiApiKeyKey).timeout(const Duration(seconds: 1));
+      } else {
+        await _secureStorage.write(key: _geminiApiKeyKey, value: geminiApiKey).timeout(const Duration(seconds: 1));
+      }
+      await prefs.setString(_writingStyleInstructionEnKey, writingStyleInstructionEn);
+      await prefs.setString(_writingStyleInstructionIdKey, writingStyleInstructionId);
+      await prefs.setStringList(_writingStyleSamplesEnKey, writingStyleSamplesEn);
+      await prefs.setStringList(_writingStyleSamplesIdKey, writingStyleSamplesId);
+      await prefs.setInt(_settingsUpdatedAtKey, updatedAt);
+    } catch (e) {
+      debugPrint('Error saving synced settings: $e');
     }
   }
 }

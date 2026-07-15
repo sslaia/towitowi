@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../database/database.dart';
 import '../models/note.dart';
 import '../providers/notes_provider.dart';
+import '../providers/settings_provider.dart';
 
 class SyncService {
   static const String _lastSyncTimeKey = 'sync_service_last_sync_time';
@@ -186,8 +187,9 @@ class SyncService {
   /// A ConflictResolver callback can be passed in to resolve conflicts interactively.
   static Future<void> syncNotes(
     NotesProvider notesProvider,
-    Future<Note?> Function(Note local, Note remote) conflictResolver,
-  ) async {
+    Future<Note?> Function(Note local, Note remote) conflictResolver, {
+    SettingsProvider? settingsProvider,
+  }) async {
     final client = await _getHttpClient();
     if (client == null) {
       throw Exception('Not signed in to Google Drive');
@@ -379,9 +381,126 @@ class SyncService {
         _lastSyncTimeKey,
         DateTime.now().millisecondsSinceEpoch,
       );
+
+      if (settingsProvider != null) {
+        await _syncSettings(driveApi, settingsProvider);
+      }
     } catch (e) {
       debugPrint('Sync failed: $e');
       rethrow;
+    }
+  }
+
+  /// Synchronize settings with Google Drive.
+  static Future<void> syncSettings(SettingsProvider settingsProvider) async {
+    final client = await _getHttpClient();
+    if (client == null) {
+      throw Exception('Not signed in to Google Drive');
+    }
+    final driveApi = drive.DriveApi(client);
+    await _syncSettings(driveApi, settingsProvider);
+  }
+
+  static Future<void> _syncSettings(
+    drive.DriveApi driveApi,
+    SettingsProvider settingsProvider,
+  ) async {
+    try {
+      debugPrint('Syncing settings...');
+      // 1. Find settings sync file in appDataFolder space
+      final fileList = await driveApi.files.list(
+        q: "name = 'towitowi_settings_sync.json'",
+        spaces: 'appDataFolder',
+        $fields: 'files(id, name, modifiedTime)',
+      );
+
+      String? syncFileId;
+      Map<String, dynamic>? remoteSettings;
+
+      if (fileList.files != null && fileList.files!.isNotEmpty) {
+        syncFileId = fileList.files!.first.id;
+
+        // 2. Download remote sync file
+        final drive.Media media = await driveApi.files.get(
+          syncFileId!,
+          downloadOptions: drive.DownloadOptions.fullMedia,
+        ) as drive.Media;
+
+        final bytes = await media.stream.fold<List<int>>(
+          [],
+          (p, e) => p..addAll(e),
+        );
+        final jsonStr = utf8.decode(bytes);
+        if (jsonStr.trim().isNotEmpty) {
+          remoteSettings = json.decode(jsonStr) as Map<String, dynamic>;
+        }
+      }
+
+      final localUpdatedAt = settingsProvider.settingsUpdatedAt;
+      final remoteUpdatedAt = remoteSettings != null
+          ? (remoteSettings['updated_at'] as int? ?? 0)
+          : 0;
+
+      if (remoteUpdatedAt > localUpdatedAt) {
+        // Remote is newer, apply remote settings locally
+        await settingsProvider.updateSettingsFromSync(
+          geminiApiKey: remoteSettings!['geminiApiKey'] as String? ?? '',
+          writingStyleInstructionEn:
+              remoteSettings['writingStyleInstructionEn'] as String? ?? '',
+          writingStyleInstructionId:
+              remoteSettings['writingStyleInstructionId'] as String? ?? '',
+          writingStyleSamplesEn: List<String>.from(
+            remoteSettings['writingStyleSamplesEn'] as List<dynamic>? ?? [],
+          ),
+          writingStyleSamplesId: List<String>.from(
+            remoteSettings['writingStyleSamplesId'] as List<dynamic>? ?? [],
+          ),
+          updatedAt: remoteUpdatedAt,
+        );
+        debugPrint('Settings successfully synchronized (remote applied).');
+      } else if (localUpdatedAt > remoteUpdatedAt || syncFileId == null) {
+        // Local is newer, upload local settings to Google Drive
+        final uploadMap = {
+          'geminiApiKey': settingsProvider.geminiApiKey,
+          'writingStyleInstructionEn':
+              settingsProvider.getWritingStyleInstruction('en'),
+          'writingStyleInstructionId':
+              settingsProvider.getWritingStyleInstruction('id'),
+          'writingStyleSamplesEn':
+              settingsProvider.getWritingStyleSamples('en'),
+          'writingStyleSamplesId':
+              settingsProvider.getWritingStyleSamples('id'),
+          'updated_at': localUpdatedAt,
+        };
+        final uploadJsonStr = json.encode(uploadMap);
+        final uploadBytes = utf8.encode(uploadJsonStr);
+
+        final mediaStream = Stream.value(uploadBytes);
+        final driveFile = drive.File()
+          ..name = 'towitowi_settings_sync.json'
+          ..parents = ['appDataFolder'];
+
+        if (syncFileId == null) {
+          // Create new settings file
+          await driveApi.files.create(
+            driveFile,
+            uploadMedia: drive.Media(mediaStream, uploadBytes.length),
+          );
+        } else {
+          // Update existing settings file
+          await driveApi.files.update(
+            drive.File(),
+            syncFileId,
+            uploadMedia: drive.Media(mediaStream, uploadBytes.length),
+          );
+        }
+        debugPrint('Settings successfully synchronized (local uploaded).');
+      } else {
+        debugPrint('Settings are already up-to-date.');
+      }
+    } catch (e) {
+      debugPrint('Settings sync failed: $e');
+      // We don't rethrow to avoid blocking note sync if settings sync fails
     }
   }
 }
