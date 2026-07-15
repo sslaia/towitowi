@@ -26,6 +26,8 @@ import '../widgets/top_bar.dart';
 import '../widgets/slide_preview_carousel.dart';
 import 'edit_screen.dart';
 import '../widgets/gemini_setup_dialog.dart';
+import '../widgets/report_ai_dialog.dart';
+
 
 class DetailScreen extends StatefulWidget {
   final Note note;
@@ -1753,25 +1755,59 @@ class _DetailScreenState extends State<DetailScreen> {
                                            });
                                          },
                                        );
+                                       final reportButton = OutlinedButton.icon(
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: theme.colorScheme.error,
+                                            side: BorderSide(
+                                              color: theme.colorScheme.error.withValues(alpha: 0.5),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8.0),
+                                            ),
+                                          ),
+                                          icon: const Icon(Icons.report_problem_outlined, size: 16.0),
+                                          label: Text(
+                                            'about.report_ai_issue'.tr(),
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(color: theme.colorScheme.error),
+                                          ),
+                                          onPressed: () {
+                                            showReportAiDialog(
+                                              context,
+                                              prompt: widget.note.content,
+                                              output: _postTextController.text,
+                                            );
+                                          },
+                                        );
 
-                                       if (useVertical) {
-                                         return Column(
-                                           crossAxisAlignment: CrossAxisAlignment.stretch,
-                                           children: [
-                                             generateButton,
-                                             const SizedBox(height: 12.0),
-                                             insertButton,
-                                           ],
-                                         );
-                                       } else {
-                                         return Row(
-                                           children: [
-                                             Expanded(child: generateButton),
-                                             const SizedBox(width: 12.0),
-                                             Expanded(child: insertButton),
-                                           ],
-                                         );
-                                       }
+                                        if (useVertical) {
+                                          return Column(
+                                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                                            children: [
+                                              generateButton,
+                                              const SizedBox(height: 12.0),
+                                              insertButton,
+                                              const SizedBox(height: 12.0),
+                                              reportButton,
+                                            ],
+                                          );
+                                        } else {
+                                          return Column(
+                                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Expanded(child: generateButton),
+                                                  const SizedBox(width: 12.0),
+                                                  Expanded(child: insertButton),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 12.0),
+                                              reportButton,
+                                            ],
+                                          );
+                                        }
                                      },
                                    ),
                                    const SizedBox(height: 16.0),

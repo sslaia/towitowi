@@ -12,6 +12,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/ai_content_service.dart';
+import 'report_ai_dialog.dart';
+
 
 class SlideTheme {
   final String name;
@@ -1040,6 +1042,19 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
                     tooltip: 'detail.craft_ai_slides'.tr(),
                     color: const Color(0xFFFFE16D),
                     onPressed: _isAiGenerating ? null : _craftSlidesWithAi,
+                  ),
+                if (hasAiKey && _pages.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.report_problem_outlined, size: 20.0),
+                    tooltip: 'about.report_ai_issue'.tr(),
+                    color: theme.colorScheme.error,
+                    onPressed: _isAiGenerating ? null : () {
+                      showReportAiDialog(
+                        context,
+                        prompt: widget.noteContent,
+                        output: _pages.join('\n---\n'),
+                      );
+                    },
                   ),
                 if (_isModified)
                   IconButton(

@@ -35,8 +35,8 @@ class _EditScreenState extends State<EditScreen> {
   late FocusNode _titleFocusNode;
   late FocusNode _labelFocusNode;
   late FocusNode _contentFocusNode;
-  bool _isAiLoading = false;
   bool _isSaved = false;
+
 
   @override
   void initState() {
@@ -285,80 +285,6 @@ class _EditScreenState extends State<EditScreen> {
     }
   }
 
-  void _polishAndSummarize() async {
-    final rawThoughts = _contentController.text.trim();
-    if (rawThoughts.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('edit.polish_empty_warning'.tr()),
-          backgroundColor: Colors.amber,
-        ),
-      );
-      return;
-    }
-
-    final settingsProvider = Provider.of<SettingsProvider>(
-      context,
-      listen: false,
-    );
-    final aiService = Provider.of<AiContentService>(context, listen: false);
-
-    if (!aiService.hasAnyConfiguredKey(settingsProvider.geminiApiKey)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('edit.restructure_no_key_error'.tr()),
-          backgroundColor: Colors.redAccent,
-          action: SnackBarAction(
-            label: 'nav.settings'.tr(),
-            textColor: const Color(0xFFFFE16D),
-            onPressed: () {
-              widget.onSettingsRedirect?.call();
-            },
-          ),
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isAiLoading = true;
-    });
-
-    try {
-      final result = await aiService.restructureAndSummarize(
-        rawThoughts,
-        settingsProvider.geminiApiKey,
-      );
-
-      setState(() {
-        _contentController.text = result;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('edit.polish_success'.tr()),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('edit.polish_failed'.tr(args: [e.toString()])),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isAiLoading = false;
-        });
-      }
-    }
-  }
 
   bool _hasUnsavedChanges() {
     if (_isSaved) return false;
@@ -888,29 +814,7 @@ class _EditScreenState extends State<EditScreen> {
                       color: theme.colorScheme.primaryContainer,
                       onPressed: () => _insertFormatting('\n```\n', '\n```\n'),
                     ),
-                    // AI Polish Button
-                    if (hasAiKey) ...[
-                      _isAiLoading
-                          ? const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12.0),
-                              child: SizedBox(
-                                width: 20.0,
-                                height: 20.0,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.0,
-                                  color: Color(0xFFFFE16D),
-                                ),
-                              ),
-                            )
-                          : IconButton(
-                              icon: const Icon(Icons.auto_awesome),
-                              tooltip: 'edit.polish_summarize_tooltip'.tr(),
-                              color: theme.brightness == Brightness.dark
-                                  ? const Color(0xFFFFE16D)
-                                  : theme.colorScheme.secondary,
-                              onPressed: _polishAndSummarize,
-                            ),
-                    ],
+
                   ],
                 ),
               ),
