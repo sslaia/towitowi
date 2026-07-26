@@ -627,6 +627,57 @@ footer {
   .legal-header h1 {
     font-size: 36px;
   }
+  .cta-group {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+    gap: 12px;
+  }
+  .cta-group .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* More Apps Section */
+.more-apps-cta {
+  border-top: 1px solid var(--outline);
+  padding: 64px 0;
+  text-align: center;
+  background-color: var(--surface-container-low);
+}
+
+.more-apps-card {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 32px;
+  background: var(--surface-color);
+  border: 1px solid var(--outline);
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.more-apps-card:hover {
+  border-color: var(--accent-gold);
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+}
+
+.more-apps-card h3 {
+  font-size: 26px;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.more-apps-card p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  max-width: 600px;
+  margin: 0 auto 24px auto;
+  line-height: 1.6;
 }
 
 /* Guide CTA Section on Landing Page */
