@@ -16,6 +16,11 @@ Get it from Google Play Store and setup your own Gemini AI key. See the guide at
 
 ## Version history
 
+## VERSION 0.1.3+4
+- Improved auto backup
+- Improved AI reporting (Microsoft certification requirement for Windows apps)
+- Improved AI system instruction and style references
+
 Version 0.1.2+3
 - Migrated database from sqlite to Drift
 - Implemented Google Drive backup
