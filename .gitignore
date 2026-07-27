@@ -44,4 +44,10 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Secrets and Environment Config
+client_secret*.json
+*.env
+key.properties
+/android/app/client_secret*.json
+
 TODO.*

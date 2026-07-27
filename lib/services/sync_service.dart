@@ -22,11 +22,15 @@ class SyncService {
   static const String _googleTokenEndpoint =
       'https://oauth2.googleapis.com/token';
 
-  // Replace these with your actual OAuth credentials from Google Cloud Console
-  static const String _desktopClientId =
-      '832063400113-q68sdic1bjd10i9e463tccfatsvkhkab.apps.googleusercontent.com';
-  static const String _desktopClientSecret =
-      '';
+  static const String _desktopClientId = String.fromEnvironment(
+    'GOOGLE_DESKTOP_CLIENT_ID',
+    defaultValue:
+        '832063400113-q68sdic1bjd10i9e463tccfatsvkhkab.apps.googleusercontent.com',
+  );
+  static const String _desktopClientSecret = String.fromEnvironment(
+    'GOOGLE_DESKTOP_CLIENT_SECRET',
+    defaultValue: '',
+  );
 
   // Google Sign-In instance for mobile
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -108,7 +112,7 @@ class SyncService {
       return oauth2.Client(
         credentials,
         identifier: _desktopClientId,
-        secret: _desktopClientSecret,
+        secret: _desktopClientSecret.isEmpty ? null : _desktopClientSecret,
       );
     } catch (e) {
       debugPrint('Error loading desktop credentials: $e');
@@ -136,7 +140,7 @@ class SyncService {
         _desktopClientId,
         Uri.parse(_googleAuthEndpoint),
         Uri.parse(_googleTokenEndpoint),
-        secret: _desktopClientSecret,
+        secret: _desktopClientSecret.isEmpty ? null : _desktopClientSecret,
       );
 
       final authorizationUrl = grant.getAuthorizationUrl(
