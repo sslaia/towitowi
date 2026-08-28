@@ -630,26 +630,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ],
                 ),
               )
-            : SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Header / Hero Section (Only in Library Tab)
-                    if (_currentTab == 0 && _searchQuery.isEmpty)
-                      _buildHeroSection(layout),
-
-                    // Search input if search tab is active
-                    if (_currentTab == 1) _buildSearchInput(theme),
-
-                    // Scrollable note listing
-                    _buildNotesList(
-                      filteredNotes,
-                      layout,
-                      isMobile: true,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
+            : CustomScrollView(
+                slivers: [
+                  // Header / Hero Section (Only in Library Tab)
+                  if (_currentTab == 0 && _searchQuery.isEmpty)
+                    SliverToBoxAdapter(
+                      child: _buildHeroSection(layout),
                     ),
-                  ],
-                ),
+
+                  // Search input if search tab is active
+                  if (_currentTab == 1)
+                    SliverToBoxAdapter(
+                      child: _buildSearchInput(theme),
+                    ),
+
+                  // Virtualized sliver note listing
+                  _buildNotesSliver(
+                    filteredNotes,
+                    layout,
+                    isMobile: true,
+                  ),
+                ],
               ),
       ),
       bottomNavigationBar: BottomBar(
@@ -1034,30 +1035,51 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildNotesList(
-    List<Note> notes,
+  Widget _buildNotesSliver(
+    List<Note> allNotes,
     ResponsiveLayout layout, {
     required bool isMobile,
-    bool shrinkWrap = false,
-    ScrollPhysics? physics,
   }) {
     final theme = Theme.of(context);
     final notesProvider = Provider.of<NotesProvider>(context);
 
+    // Apply Sorting
+    List<Note> notes = List.from(allNotes);
+    notes.sort((a, b) {
+      if (_sortAscending) {
+        return a.date.compareTo(b.date);
+      } else {
+        return b.date.compareTo(a.date);
+      }
+    });
+
+    // Apply Label Filter
+    if (_selectedLabelFilter != null) {
+      notes = notes
+          .where((n) => n.label.trim().toUpperCase() == _selectedLabelFilter)
+          .toList();
+    }
+
     if (notesProvider.isLoading) {
-      return Center(
-        child: CircularProgressIndicator(
-          color: theme.colorScheme.primaryContainer,
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: CircularProgressIndicator(
+            color: theme.colorScheme.primaryContainer,
+          ),
         ),
       );
     }
 
     if (notes.isEmpty && _currentTab != 0) {
-      return Center(
-        child: Text(
-          _currentTab == 2 ? 'home.no_bookmarks'.tr() : 'home.no_notes'.tr(),
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Text(
+            _currentTab == 2 ? 'home.no_bookmarks'.tr() : 'home.no_notes'.tr(),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+            ),
           ),
         ),
       );
@@ -1074,273 +1096,293 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ? 2
         : notesToShow.length + 1 + (showViewLibraryButton ? 1 : 0);
 
-    return ListView.builder(
-      shrinkWrap: shrinkWrap,
-      physics: physics,
+    return SliverPadding(
       padding: EdgeInsets.symmetric(horizontal: layout.margin, vertical: 16.0),
-      itemCount: listLength,
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          // List Title/Header
-          String headerText = 'home.recent_notes'.tr();
-          if (_currentTab == 2) {
-            headerText = 'home.bookmarked_notes'.tr();
-          }
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index == 0) {
+              // List Title/Header
+              String headerText = 'home.recent_notes'.tr();
+              if (_currentTab == 2) {
+                headerText = 'home.bookmarked_notes'.tr();
+              }
 
-          if (_currentTab != 0) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: Text(
-                headerText,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontSize: 20.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            );
-          }
-
-          // Fetch unique labels dynamically from all notes (formatted to uppercase to prevent duplicates)
-          final uniqueLabels = notesProvider.notes
-              .map((n) => n.label.trim().toUpperCase())
-              .where((l) => l.isNotEmpty)
-              .toSet()
-              .toList();
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        headerText,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontSize: 20.0,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+              if (_currentTab != 0) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    headerText,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold,
                     ),
+                  ),
+                );
+              }
+
+              // Fetch unique labels dynamically from all notes (formatted to uppercase to prevent duplicates)
+              final uniqueLabels = notesProvider.notes
+                  .map((n) => n.label.trim().toUpperCase())
+                  .where((l) => l.isNotEmpty)
+                  .toSet()
+                  .toList();
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Sort Button
-                        PopupMenuButton<bool>(
-                          icon: Icon(
-                            _sortAscending
-                                ? Icons.arrow_upward_rounded
-                                : Icons.arrow_downward_rounded,
-                            color: theme.colorScheme.primaryContainer,
-                            size: 20.0,
+                        Expanded(
+                          child: Text(
+                            headerText,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          tooltip: 'filter.sort_date'.tr(),
-                          onSelected: (bool val) {
-                            setState(() {
-                              _sortAscending = val;
-                            });
-                          },
-                          itemBuilder: (context) => [
-                            PopupMenuItem(
-                              value: false,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.arrow_downward_rounded,
-                                    size: 18,
-                                    color: !_sortAscending
-                                        ? theme.colorScheme.primaryContainer
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text('filter.newest_first'.tr()),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: true,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.arrow_upward_rounded,
-                                    size: 18,
-                                    color: _sortAscending
-                                        ? theme.colorScheme.primaryContainer
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text('filter.oldest_first'.tr()),
-                                ],
-                              ),
-                            ),
-                          ],
                         ),
-                        // Label Filter Button
-                        PopupMenuButton<String?>(
-                          icon: Icon(
-                            _selectedLabelFilter == null
-                                ? Icons.label_outline_rounded
-                                : Icons.label_rounded,
-                            color: theme.colorScheme.primaryContainer,
-                            size: 20.0,
-                          ),
-                          tooltip: 'filter.filter_label'.tr(),
-                          onSelected: (String? val) {
-                            setState(() {
-                              _selectedLabelFilter = val;
-                            });
-                          },
-                          itemBuilder: (context) => [
-                            PopupMenuItem(
-                              value: null,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.clear_all_rounded,
-                                    size: 18,
-                                    color: _selectedLabelFilter == null
-                                        ? theme.colorScheme.primaryContainer
-                                        : null,
+                        Row(
+                          children: [
+                            // Sort Button
+                            PopupMenuButton<bool>(
+                              icon: Icon(
+                                _sortAscending
+                                    ? Icons.arrow_upward_rounded
+                                    : Icons.arrow_downward_rounded,
+                                color: theme.colorScheme.primaryContainer,
+                                size: 20.0,
+                              ),
+                              tooltip: 'filter.sort_date'.tr(),
+                              onSelected: (bool val) {
+                                setState(() {
+                                  _sortAscending = val;
+                                });
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem(
+                                  value: false,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.arrow_downward_rounded,
+                                        size: 18,
+                                        color: !_sortAscending
+                                            ? theme.colorScheme.primaryContainer
+                                            : null,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text('filter.newest_first'.tr()),
+                                    ],
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text('filter.all_labels'.tr()),
-                                ],
-                              ),
-                            ),
-                            ...uniqueLabels.map(
-                              (label) => PopupMenuItem(
-                                value: label,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.label_rounded,
-                                      size: 18,
-                                      color: _selectedLabelFilter == label
-                                          ? theme.colorScheme.primaryContainer
-                                          : null,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(label),
-                                  ],
                                 ),
+                                PopupMenuItem(
+                                  value: true,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.arrow_upward_rounded,
+                                        size: 18,
+                                        color: _sortAscending
+                                            ? theme.colorScheme.primaryContainer
+                                            : null,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text('filter.oldest_first'.tr()),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            // Label Filter Button
+                            PopupMenuButton<String?>(
+                              icon: Icon(
+                                _selectedLabelFilter == null
+                                    ? Icons.label_outline_rounded
+                                    : Icons.label_rounded,
+                                color: theme.colorScheme.primaryContainer,
+                                size: 20.0,
                               ),
+                              tooltip: 'filter.filter_label'.tr(),
+                              onSelected: (String? val) {
+                                setState(() {
+                                  _selectedLabelFilter = val;
+                                });
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem(
+                                  value: null,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.clear_all_rounded,
+                                        size: 18,
+                                        color: _selectedLabelFilter == null
+                                            ? theme.colorScheme.primaryContainer
+                                            : null,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text('filter.all_labels'.tr()),
+                                    ],
+                                  ),
+                                ),
+                                ...uniqueLabels.map(
+                                  (label) => PopupMenuItem(
+                                    value: label,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.label_rounded,
+                                          size: 18,
+                                          color: _selectedLabelFilter == label
+                                              ? theme.colorScheme.primaryContainer
+                                              : null,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(label),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ],
                     ),
+                    if (_selectedLabelFilter != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
+                        child: InputChip(
+                          label: Text('# ${_selectedLabelFilter!.toUpperCase()}'),
+                          onDeleted: () {
+                            setState(() {
+                              _selectedLabelFilter = null;
+                            });
+                          },
+                          deleteIconColor: theme.colorScheme.error,
+                          backgroundColor: theme.colorScheme.primaryContainer
+                              .withValues(alpha: 0.1),
+                        ),
+                      ),
                   ],
                 ),
-                if (_selectedLabelFilter != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
-                    child: InputChip(
-                      label: Text('# ${_selectedLabelFilter!.toUpperCase()}'),
-                      onDeleted: () {
-                        setState(() {
-                          _selectedLabelFilter = null;
-                        });
-                      },
-                      deleteIconColor: theme.colorScheme.error,
-                      backgroundColor: theme.colorScheme.primaryContainer
-                          .withValues(alpha: 0.1),
+              );
+            }
+
+            if (notesToShow.isEmpty && index == 1) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40.0),
+                child: Center(
+                  child: Text(
+                    'home.no_notes'.tr(),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                     ),
                   ),
-              ],
-            ),
-          );
-        }
-
-        if (notesToShow.isEmpty && index == 1) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 40.0),
-            child: Center(
-              child: Text(
-                'home.no_notes'.tr(),
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
-              ),
-            ),
-          );
-        }
+              );
+            }
 
-        if (showViewLibraryButton && index == notesToShow.length + 1) {
-          // View Library Button at the bottom
-          return Padding(
-            padding: const EdgeInsets.only(top: 16.0, bottom: 24.0),
-            child: Center(
-              child: TextButton(
-                style: TextButton.styleFrom(
-                  foregroundColor: theme.colorScheme.primaryContainer,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 12.0,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                    side: BorderSide(
-                      color: theme.colorScheme.primaryContainer.withValues(
-                        alpha: 0.3,
+            if (showViewLibraryButton && index == notesToShow.length + 1) {
+              // View Library Button at the bottom
+              return Padding(
+                padding: const EdgeInsets.only(top: 16.0, bottom: 24.0),
+                child: Center(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.primaryContainer,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24.0,
+                        vertical: 12.0,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                        side: BorderSide(
+                          color: theme.colorScheme.primaryContainer.withValues(
+                            alpha: 0.3,
+                          ),
+                        ),
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showAllNotes = true;
+                      });
+                    },
+                    child: Text(
+                      'home.view_library'.tr(),
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
                       ),
                     ),
                   ),
                 ),
-                onPressed: () {
-                  setState(() {
-                    _showAllNotes = true;
-                  });
-                },
-                child: Text(
-                  'home.view_library'.tr(),
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }
-
-        final note = notesToShow[index - 1];
-        final isSelected = note.id == _selectedNoteId && !isMobile;
-
-        return NoteListItem(
-          note: note,
-          isSelected: isSelected,
-          onTap: () {
-            FocusManager.instance.primaryFocus?.unfocus();
-            if (isMobile) {
-              // Mobile Page Push
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => DetailScreen(
-                    note: note,
-                    onSettingsRedirect: () {
-                      Navigator.pop(context); // Pop DetailScreen
-                      _navigateToSettings();
-                    },
-                  ),
-                ),
               );
-            } else {
-              // Desktop update selected note
-              setState(() {
-                _selectedNoteId = note.id;
-                _isEditingRightPane = false;
-                if (_currentTab == 3) {
-                  _currentTab = 0;
-                }
-              });
             }
+
+            final note = notesToShow[index - 1];
+            final isSelected = note.id == _selectedNoteId && !isMobile;
+
+            return NoteListItem(
+              note: note,
+              isSelected: isSelected,
+              onTap: () {
+                FocusManager.instance.primaryFocus?.unfocus();
+                if (isMobile) {
+                  // Mobile Page Push
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DetailScreen(
+                        note: note,
+                        onSettingsRedirect: () {
+                          Navigator.pop(context); // Pop DetailScreen
+                          _navigateToSettings();
+                        },
+                      ),
+                    ),
+                  );
+                } else {
+                  // Desktop update selected note
+                  setState(() {
+                    _selectedNoteId = note.id;
+                    _isEditingRightPane = false;
+                    if (_currentTab == 3) {
+                      _currentTab = 0;
+                    }
+                  });
+                }
+              },
+            );
           },
-        );
-      },
+          childCount: listLength,
+          addAutomaticKeepAlives: false,
+          addRepaintBoundaries: true,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotesList(
+    List<Note> allNotes,
+    ResponsiveLayout layout, {
+    required bool isMobile,
+    bool shrinkWrap = false,
+    ScrollPhysics? physics,
+  }) {
+    return CustomScrollView(
+      shrinkWrap: shrinkWrap,
+      physics: physics,
+      slivers: [
+        _buildNotesSliver(allNotes, layout, isMobile: isMobile),
+      ],
     );
   }
 

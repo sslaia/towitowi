@@ -215,40 +215,44 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
     }
   }
 
-  void _showUnsplashSearchDialog() {
+  Future<void> _showUnsplashSearchDialog() async {
     final TextEditingController controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('detail.unsplash_search_title'.tr()),
-          content: TextField(
-            controller: controller,
-            selectAllOnFocus: false,
-            decoration: InputDecoration(
-              hintText: 'detail.unsplash_search_hint'.tr(),
-              border: const OutlineInputBorder(),
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('detail.unsplash_search_title'.tr()),
+            content: TextField(
+              controller: controller,
+              selectAllOnFocus: false,
+              decoration: InputDecoration(
+                hintText: 'detail.unsplash_search_hint'.tr(),
+                border: const OutlineInputBorder(),
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('detail.cancel'.tr()),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final query = controller.text.trim();
-                Navigator.pop(context);
-                if (query.isNotEmpty) {
-                  _searchAndApplyUnsplashImage(query);
-                }
-              },
-              child: Text('detail.search'.tr()),
-            ),
-          ],
-        );
-      },
-    );
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('detail.cancel'.tr()),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final query = controller.text.trim();
+                  Navigator.pop(context);
+                  if (query.isNotEmpty) {
+                    _searchAndApplyUnsplashImage(query);
+                  }
+                },
+                child: Text('detail.search'.tr()),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      controller.dispose();
+    }
   }
 
   Future<void> _searchAndApplyUnsplashImage(String query) async {
@@ -493,66 +497,67 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
     }
   }
 
-  void _editCurrentSlide() {
+  Future<void> _editCurrentSlide() async {
     final textController = TextEditingController(text: _pages[_currentPageIndex]);
-    showDialog(
-      context: context,
-      builder: (context) {
-        final theme = Theme.of(context);
-        return AlertDialog(
-          title: Text(
-            'detail.edit_slide_title'.tr(args: [(_currentPageIndex + 1).toString()]),
-            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          content: TextField(
-            controller: textController,
-            selectAllOnFocus: false,
-            maxLines: 8,
-            minLines: 3,
-            decoration: InputDecoration(
-              hintText: 'detail.edit_slide_hint'.tr(),
-              border: const OutlineInputBorder(),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                  color: theme.colorScheme.primaryContainer,
-                  width: 2.0,
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) {
+          final theme = Theme.of(context);
+          return AlertDialog(
+            title: Text(
+              'detail.edit_slide_title'.tr(args: [(_currentPageIndex + 1).toString()]),
+              style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            content: TextField(
+              controller: textController,
+              selectAllOnFocus: false,
+              maxLines: 8,
+              minLines: 3,
+              decoration: InputDecoration(
+                hintText: 'detail.edit_slide_hint'.tr(),
+                border: const OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.primaryContainer,
+                    width: 2.0,
+                  ),
                 ),
               ),
+              style: theme.textTheme.bodyMedium,
             ),
-            style: theme.textTheme.bodyMedium,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'detail.cancel'.tr(),
-                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'detail.cancel'.tr(),
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                ),
               ),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primaryContainer,
-                foregroundColor: theme.colorScheme.onPrimaryContainer,
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  foregroundColor: theme.colorScheme.onPrimaryContainer,
+                ),
+                onPressed: () {
+                  final newText = textController.text.trim();
+                  Navigator.pop(context);
+                  if (newText.isNotEmpty && newText != _pages[_currentPageIndex]) {
+                    setState(() {
+                      _pages[_currentPageIndex] = newText;
+                      _isModified = true;
+                    });
+                  }
+                },
+                child: Text('detail.save_changes'.tr()),
               ),
-              onPressed: () {
-                final newText = textController.text.trim();
-                Navigator.pop(context);
-                if (newText.isNotEmpty && newText != _pages[_currentPageIndex]) {
-                  setState(() {
-                    _pages[_currentPageIndex] = newText;
-                    _isModified = true;
-                  });
-                }
-              },
-              child: Text(
-                'detail.save'.tr(),
-                style: TextStyle(color: theme.colorScheme.onPrimary),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+            ],
+          );
+        },
+      );
+    } finally {
+      textController.dispose();
+    }
   }
 
   @override
@@ -1350,7 +1355,11 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
       return BoxDecoration(
         color: Colors.black,
         image: DecorationImage(
-          image: FileImage(_pickedImageFile!),
+          image: ResizeImage(
+            FileImage(_pickedImageFile!),
+            width: 1080,
+            allowUpscaling: false,
+          ),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(
             Colors.black.withValues(alpha: 0.55),
@@ -1362,7 +1371,11 @@ class _SlidePreviewCarouselState extends State<SlidePreviewCarousel> {
       return BoxDecoration(
         color: Colors.black,
         image: DecorationImage(
-          image: NetworkImage(_unsplashImageUrl!),
+          image: ResizeImage(
+            NetworkImage(_unsplashImageUrl!),
+            width: 1080,
+            allowUpscaling: false,
+          ),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(
             Colors.black.withValues(alpha: 0.55),

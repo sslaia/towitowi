@@ -16,12 +16,17 @@ Get it from Google Play Store and setup your own Gemini AI key. See the guide at
 
 ## Version history
 
-## VERSION 0.1.3+4
+## VERSION 0.1.4
+- Memory usage optimization (new Play Store requirement)
+- Fix the note detail screen not refreshing after saving the edit
+
+
+## VERSION 0.1.3
 - Improved auto backup
 - Improved AI reporting (Microsoft certification requirement for Windows apps)
 - Improved AI system instruction and style references
 
-Version 0.1.2+3
+Version 0.1.2
 - Migrated database from sqlite to Drift
 - Implemented Google Drive backup
 - Syncing notes manually between Android and desktop using Drive synchronization

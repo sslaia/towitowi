@@ -86,6 +86,14 @@ class _DetailScreenState extends State<DetailScreen> {
   String? _unsplashImageUrl;
   String? _unsplashPhotoAuthor;
 
+  Note? _localNote;
+  Note? _lastObservedNote;
+
+  Note _getActiveNote(BuildContext context) {
+    final notesProvider = Provider.of<NotesProvider>(context, listen: false);
+    return notesProvider.getNoteById(widget.note.id) ?? _localNote ?? widget.note;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -104,9 +112,10 @@ class _DetailScreenState extends State<DetailScreen> {
     });
   }
 
-  void _updatePostTextController() {
+  void _updatePostTextController({Note? noteOverride}) {
+    final activeNote = noteOverride ?? _getActiveNote(context);
     if (_selectedPreviewTab == 0) {
-      _postTextController.text = _shareSummary ?? widget.note.content;
+      _postTextController.text = _shareSummary ?? activeNote.content;
     } else if (_selectedPreviewTab == 1) {
       _postTextController.text = _facebookSummary ?? '';
     } else if (_selectedPreviewTab == 2) {
@@ -118,13 +127,13 @@ class _DetailScreenState extends State<DetailScreen> {
     }
 
     if (_selectedPreviewTab == 0) {
-      _postTitleController.text = _shareTitle ?? widget.note.title;
+      _postTitleController.text = _shareTitle ?? activeNote.title;
     } else if (_selectedPreviewTab == 1) {
-      _postTitleController.text = _facebookTitle ?? widget.note.title;
+      _postTitleController.text = _facebookTitle ?? activeNote.title;
     } else if (_selectedPreviewTab == 2) {
-      _postTitleController.text = _mastodonTitle ?? widget.note.title;
+      _postTitleController.text = _mastodonTitle ?? activeNote.title;
     } else if (_selectedPreviewTab == 3) {
-      _postTitleController.text = _blueskyTitle ?? widget.note.title;
+      _postTitleController.text = _blueskyTitle ?? activeNote.title;
     } else {
       _postTitleController.text = '';
     }
@@ -182,6 +191,7 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<void> _toggleSpeech() async {
+    final activeNote = _getActiveNote(context);
     if (_isSpeaking) {
       await _flutterTts.stop();
       setState(() {
@@ -193,8 +203,8 @@ class _DetailScreenState extends State<DetailScreen> {
       } catch (e) {
         debugPrint('Error setting language: $e');
       }
-      if (widget.note.content.isNotEmpty) {
-        await _flutterTts.speak(widget.note.content);
+      if (activeNote.content.isNotEmpty) {
+        await _flutterTts.speak(activeNote.content);
       }
     }
   }
@@ -205,6 +215,7 @@ class _DetailScreenState extends State<DetailScreen> {
       listen: false,
     );
     final aiService = Provider.of<AiContentService>(context, listen: false);
+    final activeNote = _getActiveNote(context);
 
     if (!aiService.hasAnyConfiguredKey(settingsProvider.geminiApiKey)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -234,7 +245,7 @@ class _DetailScreenState extends State<DetailScreen> {
       final includeHashtags = true;
 
       final result = await aiService.generateSocialSummary(
-        textContent: widget.note.content,
+        textContent: activeNote.content,
         userApiKey: settingsProvider.geminiApiKey,
         maxCharacters: maxChars,
         includeHashtags: includeHashtags,
@@ -319,9 +330,10 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   void _shareSystem() async {
-    final String title = widget.note.title;
-    final String dateStr = widget.note.formattedDate;
-    final String rawContent = _shareSummary ?? widget.note.content;
+    final activeNote = _getActiveNote(context);
+    final String title = activeNote.title;
+    final String dateStr = activeNote.formattedDate;
+    final String rawContent = _shareSummary ?? activeNote.content;
     final String noteContent = Note.stripMarkdown(rawContent);
     final String footer = 'detail.share_footer'.tr();
     final String sharedText = '$title\n$dateStr\n\n$noteContent\n\n$footer';
@@ -621,6 +633,8 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   Future<Uint8List> _generatePdfDoc() async {
+    final activeNote = _getActiveNote(context);
+
     final fontRegular = await PdfGoogleFonts.hankenGroteskRegular();
     final fontBold = await PdfGoogleFonts.hankenGroteskBold();
     final fontItalic = await PdfGoogleFonts.hankenGroteskItalic();
@@ -654,7 +668,7 @@ class _DetailScreenState extends State<DetailScreen> {
         build: (pw.Context context) {
           return [
             pw.Text(
-              _normalizeText(widget.note.title),
+              _normalizeText(activeNote.title),
               style: pw.TextStyle(
                 font: ebGaramondBold,
                 fontSize: 24,
@@ -663,7 +677,7 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
             pw.SizedBox(height: 4),
             pw.Text(
-              widget.note.formattedDate,
+              activeNote.formattedDate,
               style: const pw.TextStyle(
                 fontSize: 10,
                 color: PdfColors.grey600,
@@ -672,7 +686,7 @@ class _DetailScreenState extends State<DetailScreen> {
             pw.SizedBox(height: 10),
             pw.Divider(color: PdfColors.grey300, thickness: 1),
             pw.SizedBox(height: 15),
-            ..._parseContentToPdfWidgets(widget.note.content, headerStyle),
+            ..._parseContentToPdfWidgets(activeNote.content, headerStyle),
           ];
         },
       ),
@@ -681,6 +695,7 @@ class _DetailScreenState extends State<DetailScreen> {
   }
 
   void _confirmDeleteNote() {
+    final activeNote = _getActiveNote(context);
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -717,7 +732,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 Navigator.pop(context); // pop dialog
                 
                 final notesProvider = Provider.of<NotesProvider>(context, listen: false);
-                await notesProvider.deleteNote(widget.note.id);
+                await notesProvider.deleteNote(activeNote.id);
                 
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -755,6 +770,28 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final settingsProvider = Provider.of<SettingsProvider>(context);
+    final notesProvider = Provider.of<NotesProvider>(context);
+    final activeNote = notesProvider.getNoteById(widget.note.id) ?? _localNote ?? widget.note;
+
+    if (_lastObservedNote == null ||
+        _lastObservedNote!.content != activeNote.content ||
+        _lastObservedNote!.title != activeNote.title ||
+        _lastObservedNote!.label != activeNote.label) {
+      _lastObservedNote = activeNote;
+      _shareSummary = null;
+      _facebookSummary = '';
+      _mastodonSummary = '';
+      _blueskySummary = '';
+      _shareTitle = null;
+      _facebookTitle = null;
+      _mastodonTitle = null;
+      _blueskyTitle = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _updatePostTextController(noteOverride: activeNote);
+        }
+      });
+    }
 
     return ResponsiveBuilder(
       builder: (context, layout) {
@@ -772,21 +809,21 @@ class _DetailScreenState extends State<DetailScreen> {
             actions: [
               IconButton(
                 icon: Icon(
-                  settingsProvider.isBookmarked(widget.note.id)
+                  settingsProvider.isBookmarked(activeNote.id)
                       ? Icons.bookmark_rounded
                       : Icons.bookmark_border_rounded,
-                  color: settingsProvider.isBookmarked(widget.note.id)
+                  color: settingsProvider.isBookmarked(activeNote.id)
                       ? theme.colorScheme.primaryContainer
                       : theme.colorScheme.onSurface,
                 ),
-                tooltip: settingsProvider.isBookmarked(widget.note.id)
+                tooltip: settingsProvider.isBookmarked(activeNote.id)
                     ? 'detail.unbookmarked'.tr()
                     : 'detail.bookmarked'.tr(),
                 onPressed: () async {
                   final wasBookmarked = settingsProvider.isBookmarked(
-                    widget.note.id,
+                    activeNote.id,
                   );
-                  await settingsProvider.toggleBookmark(widget.note.id);
+                  await settingsProvider.toggleBookmark(activeNote.id);
 
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -820,7 +857,14 @@ class _DetailScreenState extends State<DetailScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => EditScreen(
-                          note: widget.note,
+                          note: activeNote,
+                          onSaved: (savedNote) {
+                            setState(() {
+                              _localNote = savedNote;
+                              _lastObservedNote = savedNote;
+                              _updatePostTextController(noteOverride: savedNote);
+                            });
+                          },
                           onSettingsRedirect: () {
                             Navigator.pop(context); // Pop EditScreen
                             widget.onSettingsRedirect?.call();
@@ -849,21 +893,22 @@ class _DetailScreenState extends State<DetailScreen> {
           body: Stack(
             clipBehavior: Clip.none,
             children: [
-              // Offscreen render area for image export capturing
-              Positioned(
-                left: -2000.0,
-                top: 0.0,
-                child: RepaintBoundary(
-                  key: _repaintKey,
-                  child: SizedBox(
-                    width: 1080.0,
-                    child: _buildSingleSlidePreview(
-                      content: _postTextController.text,
-                      theme: slideThemes[_currentThemeIndex],
+              // Offscreen render area for image export capturing (only mounted when preview tab is active)
+              if (_selectedPreviewTab != -1)
+                Positioned(
+                  left: -2000.0,
+                  top: 0.0,
+                  child: RepaintBoundary(
+                    key: _repaintKey,
+                    child: SizedBox(
+                      width: 1080.0,
+                      child: _buildSingleSlidePreview(
+                        content: _postTextController.text,
+                        theme: slideThemes[_currentThemeIndex],
+                      ),
                     ),
                   ),
                 ),
-              ),
               SingleChildScrollView(
                 child: Center(
                   child: Container(
@@ -888,7 +933,7 @@ class _DetailScreenState extends State<DetailScreen> {
                         ),
                         const SizedBox(width: 8.0),
                         Text(
-                          widget.note.label.toUpperCase(),
+                          activeNote.label.toUpperCase(),
                           style: theme.textTheme.labelLarge?.copyWith(
                             color: theme.colorScheme.onSecondaryContainer,
                             fontSize: 12.0,
@@ -905,7 +950,7 @@ class _DetailScreenState extends State<DetailScreen> {
                           ),
                         ),
                         Text(
-                          widget.note.formattedDate,
+                          activeNote.formattedDate,
                           style: theme.textTheme.labelLarge?.copyWith(
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.5,
@@ -924,7 +969,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       children: [
                         Expanded(
                           child: Text(
-                            widget.note.title,
+                            activeNote.title,
                             style: theme.textTheme.displayLarge?.copyWith(
                               fontSize: isMobile ? 36.0 : 56.0,
                               height: 1.1,
@@ -952,7 +997,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     // Word count
                     Text(
                       'detail.word_count'.tr(
-                        args: [widget.note.wordCount.toString()],
+                        args: [activeNote.wordCount.toString()],
                       ),
                       style: theme.textTheme.bodySmall?.copyWith(
                         fontStyle: FontStyle.italic,
@@ -965,7 +1010,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
                     // Body Content (Markdown)
                     MarkdownBody(
-                      data: widget.note.content,
+                      data: activeNote.content,
                       styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
                         p: theme.textTheme.bodyLarge?.copyWith(
                           height: 1.8,
@@ -1043,6 +1088,7 @@ class _DetailScreenState extends State<DetailScreen> {
     final aiService = Provider.of<AiContentService>(context, listen: false);
     final hasAiKey = aiService.hasAnyConfiguredKey(settingsProvider.geminiApiKey);
     final currentTab = _selectedPreviewTab;
+    final activeNote = _getActiveNote(context);
 
     if (currentTab == -1) {
       return Container(
@@ -1139,9 +1185,9 @@ class _DetailScreenState extends State<DetailScreen> {
 
     if (currentTab == 0) {
       title = 'detail.tab_share'.tr();
-      cachedSummary = _shareSummary ?? widget.note.content;
+      cachedSummary = _shareSummary ?? activeNote.content;
       isGenerating = false;
-      maxChars = (_shareSummary ?? widget.note.content).length;
+      maxChars = (_shareSummary ?? activeNote.content).length;
       platformIconPath = 'assets/icon/share-icon.svg';
       accentColor = const Color(0xFFFFE16D);
     } else if (currentTab == 1) {
@@ -1167,62 +1213,44 @@ class _DetailScreenState extends State<DetailScreen> {
       accentColor = const Color(0xFF0085FF);
     } else if (currentTab == 4) {
       title = 'detail.tab_instagram'.tr();
-      cachedSummary = '';
+      cachedSummary = null;
       isGenerating = false;
       maxChars = 0;
       platformIconPath = 'assets/icon/instagram-icon.svg';
-      accentColor = const Color(0xFFE1306C);
-    } else {
+      accentColor = const Color(0xFFE4405F);
+    } else if (currentTab == 5) {
       title = 'detail.tab_pdf'.tr();
-      cachedSummary = '';
+      cachedSummary = null;
       isGenerating = false;
       maxChars = 0;
       platformIconPath = 'assets/icon/pdf-icon.svg';
-      accentColor = const Color(0xFFF44336);
+      accentColor = const Color(0xFFE53935);
+    } else {
+      title = '';
+      cachedSummary = null;
+      isGenerating = false;
+      maxChars = 0;
+      platformIconPath = '';
+      accentColor = Colors.transparent;
     }
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header of Social Preview Card
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 12.0),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.auto_awesome,
-                  color: theme.colorScheme.primaryContainer,
-                  size: 20.0,
-                ),
-                const SizedBox(width: 8.0),
-                Expanded(
-                  child: Text(
-                    'detail.social_preview'.tr(),
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.5,
-                      fontSize: 12.0,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Custom Tab Bar for Platforms (Scrollable horizontally to prevent overflow)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+          // Platform Tabs
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
               child: Row(
                 children: [
                   _buildSocialTabButton(
@@ -1271,13 +1299,13 @@ class _DetailScreenState extends State<DetailScreen> {
               duration: const Duration(milliseconds: 200),
               child: currentTab == 4
                   ? SlidePreviewCarousel(
-                      key: ValueKey('instagram_${widget.note.id}'),
-                      noteTitle: widget.note.title,
-                      noteContent: widget.note.content,
+                      key: ValueKey('instagram_${activeNote.id}'),
+                      noteTitle: activeNote.title,
+                      noteContent: activeNote.content,
                     )
                   : currentTab == 5
                       ? SizedBox(
-                          key: ValueKey('pdf_${widget.note.id}'),
+                          key: ValueKey('pdf_${activeNote.id}'),
                           height: 550.0,
                           child: PdfPreview(
                             build: (format) => _generatePdfDoc(),
@@ -1286,7 +1314,7 @@ class _DetailScreenState extends State<DetailScreen> {
                             canChangePageFormat: false,
                             canChangeOrientation: false,
                             canDebug: false,
-                            pdfFileName: '${widget.note.title.replaceAll(RegExp(r'[^\w\s-]'), '')}.pdf',
+                            pdfFileName: '${activeNote.title.replaceAll(RegExp(r'[^\w\s-]'), '')}.pdf',
                           ),
                         )
                       : isGenerating
@@ -1745,16 +1773,17 @@ class _DetailScreenState extends State<DetailScreen> {
                                          onPressed: () {
                                            setState(() {
                                              if (currentTab == 1) {
-                                               _facebookSummary = widget.note.content;
+                                               _facebookSummary = activeNote.content;
                                              } else if (currentTab == 2) {
-                                               _mastodonSummary = widget.note.content;
+                                               _mastodonSummary = activeNote.content;
                                              } else if (currentTab == 3) {
-                                               _blueskySummary = widget.note.content;
+                                               _blueskySummary = activeNote.content;
                                              }
-                                             _updatePostTextController();
+                                             _updatePostTextController(noteOverride: activeNote);
                                            });
                                          },
                                        );
+
                                        final reportButton = OutlinedButton.icon(
                                           style: OutlinedButton.styleFrom(
                                             foregroundColor: theme.colorScheme.error,
@@ -1848,10 +1877,10 @@ class _DetailScreenState extends State<DetailScreen> {
                                     // Character count
                                     if (currentTab != 0) ...[
                                       Text(
-                                        '${cachedSummary.length}/$maxChars',
+                                        '${cachedSummary?.length ?? 0}/$maxChars',
                                         style: theme.textTheme.bodySmall?.copyWith(
                                           fontWeight: FontWeight.bold,
-                                          color: cachedSummary.length <= maxChars
+                                          color: (cachedSummary?.length ?? 0) <= maxChars
                                               ? Colors.green
                                               : Colors.redAccent,
                                         ),
@@ -1859,7 +1888,7 @@ class _DetailScreenState extends State<DetailScreen> {
                                       const SizedBox(width: 16.0),
                                     ] else ...[
                                       Text(
-                                        '${cachedSummary.length}',
+                                        '${cachedSummary?.length ?? 0}',
                                         style: theme.textTheme.bodySmall?.copyWith(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.green,
@@ -2099,7 +2128,11 @@ class _DetailScreenState extends State<DetailScreen> {
       return BoxDecoration(
         color: Colors.black,
         image: DecorationImage(
-          image: FileImage(_pickedImageFile!),
+          image: ResizeImage(
+            FileImage(_pickedImageFile!),
+            width: 1080,
+            allowUpscaling: false,
+          ),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(
             Colors.black.withValues(alpha: 0.55),
@@ -2111,7 +2144,11 @@ class _DetailScreenState extends State<DetailScreen> {
       return BoxDecoration(
         color: Colors.black,
         image: DecorationImage(
-          image: NetworkImage(_unsplashImageUrl!),
+          image: ResizeImage(
+            NetworkImage(_unsplashImageUrl!),
+            width: 1080,
+            allowUpscaling: false,
+          ),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(
             Colors.black.withValues(alpha: 0.55),
@@ -2149,40 +2186,44 @@ class _DetailScreenState extends State<DetailScreen> {
     }
   }
 
-  void _showUnsplashSearchDialog() {
+  Future<void> _showUnsplashSearchDialog() async {
     final TextEditingController controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('detail.unsplash_search_title'.tr()),
-          content: TextField(
-            controller: controller,
-            selectAllOnFocus: false,
-            decoration: InputDecoration(
-              hintText: 'detail.unsplash_search_hint'.tr(),
-              border: const OutlineInputBorder(),
+    try {
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('detail.unsplash_search_title'.tr()),
+            content: TextField(
+              controller: controller,
+              selectAllOnFocus: false,
+              decoration: InputDecoration(
+                hintText: 'detail.unsplash_search_hint'.tr(),
+                border: const OutlineInputBorder(),
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('detail.cancel'.tr()),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final query = controller.text.trim();
-                Navigator.pop(context);
-                if (query.isNotEmpty) {
-                  _searchAndApplyUnsplashImage(query);
-                }
-              },
-              child: Text('detail.search'.tr()),
-            ),
-          ],
-        );
-      },
-    );
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('detail.cancel'.tr()),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final query = controller.text.trim();
+                  Navigator.pop(context);
+                  if (query.isNotEmpty) {
+                    _searchAndApplyUnsplashImage(query);
+                  }
+                },
+                child: Text('detail.search'.tr()),
+              ),
+            ],
+          );
+        },
+      );
+    } finally {
+      controller.dispose();
+    }
   }
 
   Future<void> _searchAndApplyUnsplashImage(String query) async {

@@ -75,7 +75,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
 
+  // Constrain Flutter image cache to prevent unbounded memory growth on mobile devices
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 40 * 1024 * 1024; // 40 MB max
+  PaintingBinding.instance.imageCache.maximumSize = 100; // max 100 image entries
+
   // Trigger background prefetching
+
   _prefetchPdfFonts();
 
   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
